@@ -73,7 +73,7 @@
         .day-weather { margin-bottom: 8px; }
         .day-weather:last-child { margin-bottom: 0; }
         .day-label { font-size: 0.85rem; color: #94a3b8; }
-        .temp-row { display: flex; justify-between: space-between; align-items: center; margin: 4px 0; }
+        .temp-row { display: flex; justify-content: space-between; align-items: center; margin: 4px 0; }
         .temp-val { font-size: 1.35rem; font-weight: bold; }
         .weather-icon { width: 45px; height: 45px; object-fit: contain; }
         .weather-desc { font-size: 0.85rem; color: #cbd5e1; line-height: 1.3; }
@@ -335,6 +335,7 @@
         ];
 
         let currentBuses = [];
+        let cachedEtas = {}; // 暫存歷史到站時間，防閃爍
 
         function loadBusConfigs() {
             const saved = localStorage.getItem('user_bus_configs_v2');
@@ -366,21 +367,22 @@
                     const tomorrow = data.weatherForecast[1];
 
                     const getIconUrl = (code) => `https://www.hko.gov.hk/images/HKOWxIconOutline/pic${code}.png`;
+                    const getDesc = (item) => item.forecastWeather || item.forecastForecast || "大致多雲";
 
                     document.getElementById('tc-today-temp').innerText = `${today.forecastMintemp.value}°C - ${today.forecastMaxtemp.value}°C`;
-                    document.getElementById('tc-today-desc').innerText = today.forecastForecast;
+                    document.getElementById('tc-today-desc').innerText = getDesc(today);
                     document.getElementById('tc-today-icon').src = getIconUrl(today.ForecastIcon);
 
                     document.getElementById('tst-today-temp').innerText = `${today.forecastMintemp.value}°C - ${today.forecastMaxtemp.value}°C`;
-                    document.getElementById('tst-today-desc').innerText = today.forecastForecast;
+                    document.getElementById('tst-today-desc').innerText = getDesc(today);
                     document.getElementById('tst-today-icon').src = getIconUrl(today.ForecastIcon);
 
                     document.getElementById('tc-tomorrow-temp').innerText = `${tomorrow.forecastMintemp.value}°C - ${tomorrow.forecastMaxtemp.value}°C`;
-                    document.getElementById('tc-tomorrow-desc').innerText = tomorrow.forecastForecast;
+                    document.getElementById('tc-tomorrow-desc').innerText = getDesc(tomorrow);
                     document.getElementById('tc-tomorrow-icon').src = getIconUrl(tomorrow.ForecastIcon);
 
                     document.getElementById('tst-tomorrow-temp').innerText = `${tomorrow.forecastMintemp.value}°C - ${tomorrow.forecastMaxtemp.value}°C`;
-                    document.getElementById('tst-tomorrow-desc').innerText = tomorrow.forecastForecast;
+                    document.getElementById('tst-tomorrow-desc').innerText = getDesc(tomorrow);
                     document.getElementById('tst-tomorrow-icon').src = getIconUrl(tomorrow.ForecastIcon);
                 }
             } catch (err) {}
@@ -447,17 +449,14 @@
                 return;
             }
 
-            if (busListContainer.children.length === 0) {
-                busListContainer.innerHTML = '<div class="loading-text">⚡ 數據載入中...</div>';
-            }
-
-            // 按公司（kmb -> ctb -> nlb）自動排序
             const companyOrder = { kmb: 1, ctb: 2, nlb: 3 };
             const sortedBuses = [...currentBuses].sort((a, b) => (companyOrder[a.company] || 99) - (companyOrder[b.company] || 99));
 
             let newHtml = '';
             for (let bus of sortedBuses) {
+                const busKey = `${bus.company}_${bus.route}_${bus.stop}`;
                 let rawEtas = [];
+
                 if (bus.company === 'kmb') {
                     rawEtas = await getKMBSeta(bus.route, bus.stop);
                 } else if (bus.company === 'ctb') {
@@ -467,11 +466,18 @@
                 }
 
                 let etas = rawEtas.slice(0, 3).map(item => {
-                    if (!item.eta) return '未有資料';
+                    if (!item.eta) return null;
                     const diffMins = Math.round((new Date(item.eta) - new Date()) / 60000);
                     if (diffMins <= 1) return '即將到站';
                     return `${diffMins} 分鐘`;
-                });
+                }).filter(Boolean);
+
+                // 若本次未撈到新資料，則優先使用上次快取的舊資料，避免顯示 "-"
+                if (etas.length > 0) {
+                    cachedEtas[busKey] = etas;
+                } else if (cachedEtas[busKey]) {
+                    etas = cachedEtas[busKey];
+                }
 
                 while (etas.length < 3) etas.push('-');
 
@@ -567,11 +573,9 @@
             currentBuses = newConfigs;
             localStorage.setItem('user_bus_configs_v2', JSON.stringify(currentBuses));
             
-            document.getElementById('bus-list').innerHTML = '<div class="loading-text">⚡ 正在即時更新數據...</div>';
             closeSettings();
             fetchBusData();
         }
     </script>
 </body>
 </html>
-
