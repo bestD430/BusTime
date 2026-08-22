@@ -289,7 +289,7 @@
 
         <section class="bus-panel">
             <div class="panel-title">
-                <span>🚌 巴士到站動態 (即時連線)</span>
+                <span>🚌 巴士到站動態 (每分鐘更新)</span>
                 <button class="settings-btn" onclick="openSettings()">⚙️ 路線設定</button>
             </div>
             <div class="bus-list" id="bus-list"></div>
@@ -436,9 +436,8 @@
                 return;
             }
 
-            // 若目前列表為空，顯示載入中提示
             if (busListContainer.children.length === 0) {
-                busListContainer.innerHTML = '<div class="loading-text">⚡ 即時數據連線中...</div>';
+                busListContainer.innerHTML = '<div class="loading-text">⚡ 數據載入中...</div>';
             }
 
             let newHtml = '';
@@ -479,9 +478,9 @@
             busListContainer.innerHTML = newHtml;
         }
 
-        // 初始載入與設定每 10 秒即時刷新
+        // 初始執行一次，並設定每 60,000 毫秒 (1 分鐘) 自動更新一次
         fetchBusData();
-        setInterval(fetchBusData, 10000);
+        setInterval(fetchBusData, 60000);
 
         function openSettings() {
             loadBusConfigs();
@@ -547,7 +546,6 @@
             currentBuses = newConfigs;
             localStorage.setItem('user_bus_configs_v2', JSON.stringify(currentBuses));
             
-            // 即時響應：清空舊畫面並立即發送 API 請求
             document.getElementById('bus-list').innerHTML = '<div class="loading-text">⚡ 正在即時更新數據...</div>';
             closeSettings();
             fetchBusData();
