@@ -73,7 +73,7 @@
         .day-weather { margin-bottom: 8px; }
         .day-weather:last-child { margin-bottom: 0; }
         .day-label { font-size: 0.85rem; color: #94a3b8; }
-        .temp-row { display: flex; justify-content: space-between; align-items: center; margin: 4px 0; }
+        .temp-row { display: flex; justify-between: space-between; align-items: center; margin: 4px 0; }
         .temp-val { font-size: 1.35rem; font-weight: bold; }
         .weather-icon { width: 45px; height: 45px; object-fit: contain; }
         .weather-desc { font-size: 0.85rem; color: #cbd5e1; line-height: 1.3; }
@@ -116,6 +116,17 @@
             gap: 10px;
         }
         .bus-header { display: flex; justify-content: space-between; align-items: baseline; }
+        .bus-title-group { display: flex; align-items: center; gap: 8px; }
+        .bus-company-tag {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .tag-kmb { background: #991b1b; color: #fca5a5; }
+        .tag-ctb { background: #854d0e; color: #fef08a; }
+        .tag-nlb { background: #166534; color: #bbf7d0; }
+
         .bus-name {
             font-size: 1.8rem;
             font-weight: 800;
@@ -440,8 +451,12 @@
                 busListContainer.innerHTML = '<div class="loading-text">⚡ 數據載入中...</div>';
             }
 
+            // 按公司（kmb -> ctb -> nlb）自動排序
+            const companyOrder = { kmb: 1, ctb: 2, nlb: 3 };
+            const sortedBuses = [...currentBuses].sort((a, b) => (companyOrder[a.company] || 99) - (companyOrder[b.company] || 99));
+
             let newHtml = '';
-            for (let bus of currentBuses) {
+            for (let bus of sortedBuses) {
                 let rawEtas = [];
                 if (bus.company === 'kmb') {
                     rawEtas = await getKMBSeta(bus.route, bus.stop);
@@ -461,10 +476,17 @@
                 while (etas.length < 3) etas.push('-');
 
                 const isArr = etas[0] === '即將到站';
+                const companyTag = bus.company === 'kmb' ? '<span class="bus-company-tag tag-kmb">九巴</span>' : 
+                                   bus.company === 'ctb' ? '<span class="bus-company-tag tag-ctb">城巴</span>' : 
+                                   '<span class="bus-company-tag tag-nlb">嶼巴</span>';
+
                 newHtml += `
                     <div class="bus-item">
                         <div class="bus-header">
-                            <div class="bus-name">${bus.route.toUpperCase()}</div>
+                            <div class="bus-title-group">
+                                ${companyTag}
+                                <div class="bus-name">${bus.route.toUpperCase()}</div>
+                            </div>
                             <div class="bus-dest">${bus.dest_name}</div>
                         </div>
                         <div class="eta-group">
@@ -478,7 +500,6 @@
             busListContainer.innerHTML = newHtml;
         }
 
-        // 初始執行一次，並設定每 60,000 毫秒 (1 分鐘) 自動更新一次
         fetchBusData();
         setInterval(fetchBusData, 60000);
 
