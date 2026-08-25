@@ -187,7 +187,7 @@
             background: #1e293b;
             border-radius: 16px;
             width: 90%;
-            max-width: 580px;
+            max-width: 620px;
             max-height: 85vh;
             padding: 16px;
             border: 1px solid #475569;
@@ -316,8 +316,8 @@
             </div>
             <div class="hint-text">
                 💡 <b>填寫指南</b>：<br>
-                • <b>九巴 (KMB)</b>：填 App 站代碼（如 <code>TC188</code>）或 Stop ID。<br>
-                • <b>城巴/嶼巴</b>：直接填 App 內的中文/英文<b>站名</b>（如 <code>東涌纜車站</code>）。
+                • <b>九巴 (KMB)</b>：填 App 站代碼（如 <code>TC188</code>）或 Stop ID，並選擇正確方向。<br>
+                • <b>城巴/嶼巴</b>：直接填 App 內的中文/英文<b>站名</b>（如 <code>東涌纜車站</code>），並選擇去程/返程。
             </div>
             <div class="config-list" id="config-list"></div>
             <div class="modal-footer">
@@ -329,16 +329,16 @@
 
     <script>
         const defaultBuses = [
-            { company: "kmb", route: "1A", stop: "TC188", dest_name: "往 尖沙咀碼頭" },
-            { company: "ctb", route: "E33", stop: "東涌纜車站", dest_name: "往 機場/東涌" },
-            { company: "nlb", route: "23", stop: "昂坪", dest_name: "往 昂坪" }
+            { company: "kmb", route: "1A", dir: "outbound", stop: "TC188", dest_name: "往 尖沙咀碼頭" },
+            { company: "ctb", route: "E33", dir: "outbound", stop: "東涌纜車站", dest_name: "往 機場/東涌" },
+            { company: "nlb", route: "23", dir: "outbound", stop: "昂坪", dest_name: "往 昂坪" }
         ];
 
         let currentBuses = [];
         let cachedEtas = {}; // 暫存歷史到站時間，防閃爍
 
         function loadBusConfigs() {
-            const saved = localStorage.getItem('user_bus_configs_v2');
+            const saved = localStorage.getItem('user_bus_configs_v3');
             if (saved) {
                 try { currentBuses = JSON.parse(saved); } catch(e) { currentBuses = defaultBuses; }
             } else {
@@ -390,7 +390,7 @@
         fetchWeather();
         setInterval(fetchWeather, 300000);
 
-        async function getKMBSeta(route, stopCode) {
+        async function getKMBSeta(route, stopCode, dir) {
             try {
                 let targetStopId = stopCode;
                 if (stopCode.length < 10) {
@@ -401,33 +401,44 @@
                 }
                 const etaRes = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/${targetStopId}`);
                 const etaData = await etaRes.json();
-                return etaData.data.filter(i => i.route.toUpperCase() === route.toUpperCase());
+                
+                const kmbDir = dir === 'inbound' ? 'I' : 'O';
+                return etaData.data.filter(i => 
+                    i.route.toUpperCase() === route.toUpperCase() && 
+                    (!i.dir || i.dir === kmbDir)
+                );
             } catch (e) { return []; }
         }
 
-        async function getCTBETA(route, stopName) {
+        async function getCTBETA(route, stopName, dir) {
             try {
-                const stopsRes = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/${route.toUpperCase()}/outbound`);
+                const ctbDir = dir === 'inbound' ? 'inbound' : 'outbound';
+                const stopsRes = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/${route.toUpperCase()}/${ctbDir}`);
                 const stopsData = await stopsRes.json();
                 
                 let stopId = "";
-                for (let s of stopsData.data) {
-                    const infoRes = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/stop/${s.stop}`);
-                    const info = await infoRes.json();
-                    if (info.data.name_tc.includes(stopName) || info.data.name_en.toLowerCase().includes(stopName.toLowerCase())) {
-                        stopId = s.stop;
-                        break;
+                if (stopsData.data && stopsData.data.length > 0) {
+                    for (let s of stopsData.data) {
+                        const infoRes = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/stop/${s.stop}`);
+                        const info = await infoRes.json();
+                        if (info.data.name_tc.includes(stopName) || info.data.name_en.toLowerCase().includes(stopName.toLowerCase())) {
+                            stopId = s.stop;
+                            break;
+                        }
                     }
+                    if (!stopId) stopId = stopsData.data[0].stop;
                 }
-                if (!stopId && stopsData.data.length > 0) stopId = stopsData.data[0].stop;
+
+                if (!stopId) return [];
 
                 const etaRes = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${stopId}/${route.toUpperCase()}`);
                 const etaData = await etaRes.json();
-                return etaData.data;
+                const dirChar = ctbDir === 'inbound' ? 'I' : 'O';
+                return etaData.data.filter(i => i.dir === dirChar);
             } catch (e) { return []; }
         }
 
-        async function getNLBETA(route, stopName) {
+        async function getNLBETA(route, stopName, dir) {
             try {
                 const res = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list`);
                 const data = await res.json();
@@ -454,15 +465,16 @@
 
             let newHtml = '';
             for (let bus of sortedBuses) {
-                const busKey = `${bus.company}_${bus.route}_${bus.stop}`;
+                const busDir = bus.dir || 'outbound';
+                const busKey = `${bus.company}_${bus.route}_${busDir}_${bus.stop}`;
                 let rawEtas = [];
 
                 if (bus.company === 'kmb') {
-                    rawEtas = await getKMBSeta(bus.route, bus.stop);
+                    rawEtas = await getKMBSeta(bus.route, bus.stop, busDir);
                 } else if (bus.company === 'ctb') {
-                    rawEtas = await getCTBETA(bus.route, bus.stop);
+                    rawEtas = await getCTBETA(bus.route, bus.stop, busDir);
                 } else if (bus.company === 'nlb') {
-                    rawEtas = await getNLBETA(bus.route, bus.stop);
+                    rawEtas = await getNLBETA(bus.route, bus.stop, busDir);
                 }
 
                 let etas = rawEtas.slice(0, 3).map(item => {
@@ -472,7 +484,6 @@
                     return `${diffMins} 分鐘`;
                 }).filter(Boolean);
 
-                // 若本次未撈到新資料，則優先使用上次快取的舊資料，避免顯示 "-"
                 if (etas.length > 0) {
                     cachedEtas[busKey] = etas;
                 } else if (cachedEtas[busKey]) {
@@ -524,6 +535,7 @@
             container.innerHTML = '';
 
             currentBuses.forEach((bus, index) => {
+                const busDir = bus.dir || 'outbound';
                 const itemHtml = `
                     <div class="config-item">
                         <div class="config-row">
@@ -533,6 +545,10 @@
                                 <option value="nlb" ${bus.company === 'nlb' ? 'selected' : ''}>嶼巴 (NLB)</option>
                             </select>
                             <input type="text" class="config-input bus-route" placeholder="路線 (例: 1A / E33)" value="${bus.route}">
+                            <select class="config-select bus-dir">
+                                <option value="outbound" ${busDir === 'outbound' ? 'selected' : ''}>去程 (Outbound)</option>
+                                <option value="inbound" ${busDir === 'inbound' ? 'selected' : ''}>返程 (Inbound)</option>
+                            </select>
                             <button class="delete-btn" onclick="deleteBusConfig(${index})">刪除</button>
                         </div>
                         <div class="config-row">
@@ -546,7 +562,7 @@
         }
 
         function addNewBusConfig() {
-            currentBuses.push({ company: "kmb", route: "", stop: "", dest_name: "" });
+            currentBuses.push({ company: "kmb", route: "", dir: "outbound", stop: "", dest_name: "" });
             renderSettingsList();
         }
 
@@ -562,16 +578,17 @@
             items.forEach(item => {
                 const company = item.querySelector('.bus-company').value;
                 const route = item.querySelector('.bus-route').value.trim();
+                const dir = item.querySelector('.bus-dir').value;
                 const stop = item.querySelector('.bus-stop').value.trim();
                 const dest_name = item.querySelector('.bus-dest').value.trim();
 
                 if (route && stop) {
-                    newConfigs.push({ company, route, stop, dest_name });
+                    newConfigs.push({ company, route, dir, stop, dest_name });
                 }
             });
 
             currentBuses = newConfigs;
-            localStorage.setItem('user_bus_configs_v2', JSON.stringify(currentBuses));
+            localStorage.setItem('user_bus_configs_v3', JSON.stringify(currentBuses));
             
             closeSettings();
             fetchBusData();
