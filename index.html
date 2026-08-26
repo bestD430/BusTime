@@ -820,6 +820,7 @@
         fetchTrafficNews();
         setInterval(fetchTrafficNews, 60000);
 
+        /* ------------------ 巴士到站 API ------------------ */
         async function getKMBSeta(route, stopCode, dir) {
             try {
                 let targetStopId = stopCode;
@@ -1039,4 +1040,3 @@
     </script>
 </body>
 </html>
-
