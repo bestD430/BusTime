@@ -171,7 +171,7 @@
             font-weight: 600;
         }
 
-        /* 路面交通狀況報告面板 (新增於天文台信息欄下方) */
+        /* 路面交通狀況報告面板 */
         .traffic-panel {
             background: #1e293b;
             border-radius: 12px;
@@ -180,6 +180,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            position: relative;
         }
         .traffic-header {
             display: flex;
@@ -197,9 +198,38 @@
             gap: 6px;
         }
         .traffic-subtitle {
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             color: #94a3b8;
         }
+        .traffic-toggle-btn {
+            background: #334155;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .traffic-toggle-btn:hover { background: #475569; }
+
+        /* 隱藏式交通起終點設定選單 */
+        .traffic-settings-menu {
+            display: none;
+            position: absolute;
+            top: 40px;
+            left: 10px;
+            right: 10px;
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 10px;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            flex-direction: column;
+            gap: 8px;
+        }
+        .traffic-settings-menu.active { display: flex; }
+
         .traffic-content {
             display: flex;
             flex-direction: column;
@@ -502,12 +532,23 @@
                 <div class="warning-list" id="warning-list"></div>
             </div>
 
-            <!-- [新增] 路面交通狀況報告（位於天文台信息欄下方） -->
+            <!-- 路面交通狀況報告（包含起終點自訂功能） -->
             <div class="traffic-panel">
                 <div class="traffic-header">
                     <span class="traffic-title">🚗 沿途路面交通報告</span>
-                    <span class="traffic-subtitle">逸東邨 ➔ 九龍志和街</span>
+                    <span class="traffic-subtitle" id="traffic-route-display">逸東邨 ➔ 九龍志和街</span>
+                    <button class="traffic-toggle-btn" onclick="toggleTrafficMenu()">⚙️ 起終點</button>
                 </div>
+
+                <!-- 隱藏式交通起終點設定選單 -->
+                <div class="traffic-settings-menu" id="traffic-menu">
+                    <span class="menu-label">起點：</span>
+                    <input type="text" id="traffic-start-input" class="menu-input" placeholder="例：逸東邨 / 東涌">
+                    <span class="menu-label">終點：</span>
+                    <input type="text" id="traffic-end-input" class="menu-input" placeholder="例：九龍志和街 / 尖沙咀">
+                    <button class="menu-save-btn" onclick="saveTrafficConfig()">保存起終點設定</button>
+                </div>
+
                 <div class="traffic-content" id="traffic-content">
                     <div class="loading-text" style="padding: 10px;">加載最新交通消息...</div>
                 </div>
@@ -693,26 +734,57 @@
         
         initDistrictSelects();
         fetchWeather();
-        // 天文台警報每分鐘（60秒）更新一次
         setInterval(fetchWeather, 60000);
 
-        /* [新增功能] 獲取運輸署路面交通報告 */
+        /* ------------------ 路面交通起終點自訂邏輯 ------------------ */
+        let trafficConfig = JSON.parse(localStorage.getItem('traffic_cfg')) || { start: "逸東邨", end: "九龍志和街" };
+
+        function initTrafficUI() {
+            document.getElementById('traffic-start-input').value = trafficConfig.start;
+            document.getElementById('traffic-end-input').value = trafficConfig.end;
+            document.getElementById('traffic-route-display').innerText = `${trafficConfig.start} ➔ ${trafficConfig.end}`;
+        }
+
+        function toggleTrafficMenu() {
+            const menu = document.getElementById('traffic-menu');
+            menu.classList.toggle('active');
+        }
+
+        function saveTrafficConfig() {
+            const start = document.getElementById('traffic-start-input').value.trim() || "逸東邨";
+            const end = document.getElementById('traffic-end-input').value.trim() || "九龍志和街";
+            trafficConfig = { start, end };
+            localStorage.setItem('traffic_cfg', JSON.stringify(trafficConfig));
+            document.getElementById('traffic-route-display').innerText = `${start} ➔ ${end}`;
+            toggleTrafficMenu();
+            fetchTrafficNews();
+        }
+
         async function fetchTrafficNews() {
             const container = document.getElementById('traffic-content');
             try {
-                // 採用運輸署官方特別交通消息 API (XML)
                 const res = await fetch('https://www.td.gov.hk/tc/special_news/trafficnews.xml');
                 const text = await res.text();
                 const parser = new DOMParser();
                 const xml = parser.parseFromString(text, 'text/xml');
                 const items = xml.querySelectorAll('message');
 
-                // 沿途關鍵字過濾：逸東邨 -> 九龍志和街
-                const routeKeywords = [
-                    '逸東', '東涌', '青嶼幹線', '北大嶼山公路', '汲水門大橋', 
-                    '青葵公路', '長青隧道', '南灣隧道', '昂船洲大橋', '葵涌道', 
-                    '西九龍公路', '渡船街', '加士居道', '佐敦', '志和街', '漆咸道'
+                // 動態整合搜尋關鍵字 (起點、終點 + 香港常見主要過海/跨區幹道)
+                const mainHighways = [
+                    '青嶼幹線', '北大嶼山公路', '汲水門大橋', '青葵公路', '長青隧道', 
+                    '南灣隧道', '昂船洲大橋', '葵涌道', '西九龍公路', '渡船街', 
+                    '加士居道', '漆咸道', '獅子山隧道', '大老山隧道', '屯門公路', '吐露港公路'
                 ];
+                
+                // 清理名稱中的「九龍/新界」等前綴以增強匹配率
+                const cleanStart = trafficConfig.start.replace(/九龍|新界|香港島|香港/g, '').trim();
+                const cleanEnd = trafficConfig.end.replace(/九龍|新界|香港島|香港/g, '').trim();
+
+                const routeKeywords = [
+                    trafficConfig.start, trafficConfig.end,
+                    cleanStart, cleanEnd,
+                    ...mainHighways
+                ].filter(Boolean);
 
                 let matchedNews = [];
 
@@ -720,7 +792,7 @@
                     const content = item.querySelector('EngText')?.textContent || item.querySelector('ChinText')?.textContent || item.textContent;
                     const dateStr = item.querySelector('ReferenceDate')?.textContent || '';
                     
-                    const isMatched = routeKeywords.some(kw => content.includes(kw));
+                    const isMatched = routeKeywords.some(kw => kw.length > 1 && content.includes(kw));
                     if (isMatched && content.trim()) {
                         matchedNews.push({
                             time: dateStr,
@@ -744,8 +816,8 @@
             }
         }
 
+        initTrafficUI();
         fetchTrafficNews();
-        // 每 60 秒定期刷新路面交通消息
         setInterval(fetchTrafficNews, 60000);
 
         async function getKMBSeta(route, stopCode, dir) {
@@ -849,7 +921,6 @@
                     let diffMins = Math.round((etaTime - now) / 60000);
                     if (isNaN(diffMins)) return null;
 
-                    // 九巴自動減少 1 分鐘
                     if (bus.company === 'kmb') {
                         diffMins -= 1;
                     }
@@ -890,7 +961,6 @@
         }
 
         fetchBusData();
-        // 巴士到站動態每30秒更新一次
         setInterval(fetchBusData, 30000);
 
         function openSettings() {
