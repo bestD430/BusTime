@@ -89,7 +89,6 @@
         }
         .weather-toggle-btn:hover { color: #f8fafc; }
 
-        /* 隱藏式天氣設定選單 */
         .weather-settings-menu {
             display: none;
             position: absolute;
@@ -137,7 +136,6 @@
         .weather-icon { width: 45px; height: 45px; object-fit: contain; }
         .weather-desc { font-size: 0.85rem; color: #cbd5e1; line-height: 1.3; }
 
-        /* 天氣警報顯示欄 */
         .weather-warning-box {
             display: none;
             background: rgba(225, 29, 72, 0.15);
@@ -171,7 +169,6 @@
             font-weight: 600;
         }
 
-        /* 路面交通狀況報告面板 */
         .traffic-panel {
             background: #1e293b;
             border-radius: 12px;
@@ -212,7 +209,6 @@
         }
         .traffic-toggle-btn:hover { background: #475569; }
 
-        /* 隱藏式交通起終點設定選單 */
         .traffic-settings-menu {
             display: none;
             position: absolute;
@@ -375,7 +371,6 @@
             font-size: 0.9rem;
         }
 
-        /* Modal 彈窗 */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -459,14 +454,12 @@
     <main>
         <div class="left-panel">
             <div class="weather-grid">
-                <!-- 區域一 -->
                 <div class="district-box">
                     <div class="district-header">
                         <span class="district-title" id="d1-custom-title">📍 東涌</span>
                         <button class="weather-toggle-btn" onclick="toggleWeatherMenu(1)">⚙️</button>
                     </div>
 
-                    <!-- 隱藏式設定選單 -->
                     <div class="weather-settings-menu" id="weather-menu-1">
                         <span class="menu-label">顯示名稱：</span>
                         <input type="text" id="d1-input-name" class="menu-input" placeholder="例：屋企 / 東涌">
@@ -493,14 +486,12 @@
                     </div>
                 </div>
 
-                <!-- 區域二 -->
                 <div class="district-box">
                     <div class="district-header">
                         <span class="district-title" id="d2-custom-title">📍 尖沙咀</span>
                         <button class="weather-toggle-btn" onclick="toggleWeatherMenu(2)">⚙️</button>
                     </div>
 
-                    <!-- 隱藏式設定選單 -->
                     <div class="weather-settings-menu" id="weather-menu-2">
                         <span class="menu-label">顯示名稱：</span>
                         <input type="text" id="d2-input-name" class="menu-input" placeholder="例：公司 / 尖沙咀">
@@ -528,13 +519,11 @@
                 </div>
             </div>
 
-            <!-- 天氣警報顯示欄 -->
             <div class="weather-warning-box" id="weather-warning-box">
                 <div class="warning-title">⚠️ 天文台現正生效警告：</div>
                 <div class="warning-list" id="warning-list"></div>
             </div>
 
-            <!-- 路面交通狀況報告（包含起終點自訂功能） -->
             <div class="traffic-panel">
                 <div class="traffic-header">
                     <span class="traffic-title">🚗 沿途路面交通報告</span>
@@ -542,7 +531,6 @@
                     <button class="traffic-toggle-btn" onclick="toggleTrafficMenu()">⚙️ 起終點</button>
                 </div>
 
-                <!-- 隱藏式交通起終點設定選單 -->
                 <div class="traffic-settings-menu" id="traffic-menu">
                     <span class="menu-label">起點：</span>
                     <input type="text" id="traffic-start-input" class="menu-input" placeholder="例：逸東邨 / 東涌">
@@ -566,7 +554,6 @@
         </section>
     </main>
 
-    <!-- 設定彈窗 Modal -->
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -675,7 +662,6 @@
                 const warnRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc');
                 const warnData = await warnRes.json();
 
-                // 處理天氣警告
                 const warningBox = document.getElementById('weather-warning-box');
                 const warningList = document.getElementById('warning-list');
                 const activeWarnings = [];
@@ -710,7 +696,6 @@
                 const tomorrow = (fndData.weatherForecast && fndData.weatherForecast.length >= 2) ? fndData.weatherForecast[1] : null;
                 const tomorrowDesc = tomorrow ? (tomorrow.forecastWeather || tomorrow.forecastForecast) : "大致多雲";
 
-                // 渲染區域一
                 document.getElementById('d1-today-temp').innerText = getTempForDistrict(weather1.district);
                 document.getElementById('d1-today-desc').innerText = todayDesc;
                 document.getElementById('d1-today-icon').src = getIconUrl(todayIcon);
@@ -721,7 +706,6 @@
                     document.getElementById('d1-tomorrow-icon').src = getIconUrl(tomorrow.ForecastIcon);
                 }
 
-                // 渲染區域二
                 document.getElementById('d2-today-temp').innerText = getTempForDistrict(weather2.district);
                 document.getElementById('d2-today-desc').innerText = todayDesc;
                 document.getElementById('d2-today-icon').src = getIconUrl(todayIcon);
@@ -739,7 +723,6 @@
         fetchWeather();
         setInterval(fetchWeather, 60000);
 
-        /* ------------------ 路面交通起終點自訂邏輯 ------------------ */
         let trafficConfig = JSON.parse(localStorage.getItem('traffic_cfg')) || { start: "逸東邨", end: "九龍志和街" };
 
         function initTrafficUI() {
@@ -1009,7 +992,7 @@
             const route = item.querySelector('.bus-route').value.trim();
 
             if (company === 'mtr') {
-                stopContainer.innerHTML = `<select class="config-select bus-stop"><option value="">讀取車站中...</option></select>`;
+                stopContainer.innerHTML = `<select class="config-select bus-stop"><option value="">${route ? '讀取車站中...' : '請先輸入路線'}</option></select>`;
                 if (route) fetchMTRStops(route, stopContainer.querySelector('select'));
             } else {
                 stopContainer.innerHTML = `<input type="text" class="config-input bus-stop" placeholder="App 站代號 (如 TC188) 或 站名 (如 東涌纜車站)" value="${currentBuses[index]?.stop || ''}">`;
@@ -1025,9 +1008,10 @@
                 });
                 const data = await res.json();
                 if (data.busStop && data.busStop.length > 0) {
-                    selectElement.innerHTML = data.busStop.map(s => 
-                        `<option value="${s.busStopId}" ${s.busStopId === selectedStopId ? 'selected' : ''}>${s.busStopDetailName}</option>`
-                    ).join('');
+                    selectElement.innerHTML = data.busStop.map(s => {
+                        const stopName = s.busStopName || s.busStopLocationName || s.busStopId;
+                        return `<option value="${s.busStopId}" ${s.busStopId === selectedStopId ? 'selected' : ''}>${stopName}</option>`;
+                    }).join('');
                 } else {
                     selectElement.innerHTML = `<option value="">請先輸入正確的港鐵巴士路線</option>`;
                 }
@@ -1060,7 +1044,7 @@
                             <option value="nlb" ${bus.company === 'nlb' ? 'selected' : ''}>嶼巴 (NLB)</option>
                             <option value="mtr" ${bus.company === 'mtr' ? 'selected' : ''}>港鐵巴士 (MTR Bus)</option>
                         </select>
-                        <input type="text" class="config-input bus-route" placeholder="路線 (例: 1A / K52)" value="${bus.route}" onchange="handleRouteInput(${index})">
+                        <input type="text" class="config-input bus-route" placeholder="路線 (例: 1A / K52)" value="${bus.route}" onkeyup="handleRouteInput(${index})" onchange="handleRouteInput(${index})">
                         <select class="config-select bus-dir">
                             <option value="outbound" ${busDir === 'outbound' ? 'selected' : ''}>去程 (Outbound)</option>
                             <option value="inbound" ${busDir === 'inbound' ? 'selected' : ''}>返程 (Inbound)</option>
