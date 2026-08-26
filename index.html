@@ -51,7 +51,7 @@
             overflow-y: auto;
         }
 
-        .weather-grid { display: flex; gap: 10px; flex: 1; min-height: 220px; }
+        .weather-grid { display: flex; gap: 10px; flex: 1; }
         .district-box {
             flex: 1;
             background: #1e293b;
@@ -169,110 +169,6 @@
             font-weight: 600;
         }
 
-        /* 路面交通狀況報告面板 */
-        .traffic-panel {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 12px 14px;
-            border: 1px solid #334155;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            position: relative;
-        }
-        .traffic-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px dashed #475569;
-            padding-bottom: 6px;
-        }
-        .traffic-title {
-            font-size: 0.95rem;
-            font-weight: bold;
-            color: #38bdf8;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .traffic-subtitle {
-            font-size: 0.78rem;
-            color: #94a3b8;
-        }
-        .traffic-toggle-btn {
-            background: #334155;
-            color: #f8fafc;
-            border: 1px solid #475569;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            cursor: pointer;
-        }
-        .traffic-toggle-btn:hover { background: #475569; }
-
-        /* 新增：巴士預計行車時間資訊條 */
-        .travel-time-bar {
-            background: #0f172a;
-            border: 1px solid #0284c7;
-            color: #38bdf8;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .traffic-settings-menu {
-            display: none;
-            position: absolute;
-            top: 40px;
-            left: 10px;
-            right: 10px;
-            background: #0f172a;
-            border: 1px solid #475569;
-            border-radius: 8px;
-            padding: 10px;
-            z-index: 10;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            flex-direction: column;
-            gap: 8px;
-        }
-        .traffic-settings-menu.active { display: flex; }
-
-        .traffic-content {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 130px;
-            overflow-y: auto;
-        }
-        .traffic-status-normal {
-            font-size: 0.85rem;
-            color: #34d399;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            padding: 8px;
-            border-radius: 6px;
-            text-align: center;
-        }
-        .traffic-item {
-            background: #0f172a;
-            border-left: 4px solid #f59e0b;
-            padding: 8px;
-            border-radius: 4px;
-            font-size: 0.82rem;
-            line-height: 1.4;
-            color: #cbd5e1;
-        }
-        .traffic-item-time {
-            font-size: 0.72rem;
-            color: #f59e0b;
-            font-weight: bold;
-            margin-bottom: 2px;
-        }
-
         @keyframes pulse-border {
             0% { border-color: #f43f5e; box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
             70% { border-color: #e11d48; box-shadow: 0 0 0 6px rgba(244, 63, 94, 0); }
@@ -321,17 +217,23 @@
         .bus-item.item-ctb { background: #eab308; color: #000000; }
         .bus-item.item-nlb { background: #15803d; color: #ffffff; }
 
-        .bus-header { display: flex; justify-content: space-between; align-items: baseline; }
+        .bus-header { display: flex; justify-content: space-between; align-items: center; }
         .bus-title-group { display: flex; align-items: center; gap: 8px; }
-        .bus-company-tag {
+        
+        /* 巴士公司 Logo 樣式 */
+        .bus-logo-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3px 6px;
+            border-radius: 6px;
+            font-weight: 900;
             font-size: 0.75rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
+            letter-spacing: 0.5px;
         }
-        .tag-kmb { background: #7f1d1d; color: #ffffff; }
-        .tag-ctb { background: #713f12; color: #ffffff; }
-        .tag-nlb { background: #166534; color: #bbf7d0; }
+        .logo-kmb { background: #7f1d1d; color: #ffffff; border: 1px solid #ef4444; }
+        .logo-ctb { background: #002b49; color: #facc15; border: 1px solid #eab308; }
+        .logo-nlb { background: #064e3b; color: #ffffff; border: 1px solid #22c55e; }
 
         .bus-name {
             font-size: 1.8rem;
@@ -398,7 +300,7 @@
             background: #1e293b;
             border-radius: 16px;
             width: 90%;
-            max-width: 620px;
+            max-width: 680px;
             max-height: 85vh;
             padding: 16px;
             border: 1px solid #475569;
@@ -467,7 +369,6 @@
     <main>
         <div class="left-panel">
             <div class="weather-grid">
-                <!-- 區域一 -->
                 <div class="district-box">
                     <div class="district-header">
                         <span class="district-title" id="d1-custom-title">📍 東涌</span>
@@ -500,7 +401,6 @@
                     </div>
                 </div>
 
-                <!-- 區域二 -->
                 <div class="district-box">
                     <div class="district-header">
                         <span class="district-title" id="d2-custom-title">📍 尖沙咀</span>
@@ -534,50 +434,21 @@
                 </div>
             </div>
 
-            <!-- 天氣警報顯示欄 -->
             <div class="weather-warning-box" id="weather-warning-box">
                 <div class="warning-title">⚠️ 天文台現正生效警告：</div>
                 <div class="warning-list" id="warning-list"></div>
-            </div>
-
-            <!-- 路面交通狀況報告（包含預計巴士行車時間與起終點設定） -->
-            <div class="traffic-panel">
-                <div class="traffic-header">
-                    <span class="traffic-title">🚗 沿途路面交通報告</span>
-                    <span class="traffic-subtitle" id="traffic-route-display">逸東邨 ➔ 九龍志和街</span>
-                    <button class="traffic-toggle-btn" onclick="toggleTrafficMenu()">⚙️ 起終點</button>
-                </div>
-
-                <!-- 預計巴士行車時間區塊 -->
-                <div class="travel-time-bar">
-                    <span>🚌 預計巴士行車時間：</span>
-                    <span id="estimated-bus-time">計算中...</span>
-                </div>
-
-                <div class="traffic-settings-menu" id="traffic-menu">
-                    <span class="menu-label">起點：</span>
-                    <input type="text" id="traffic-start-input" class="menu-input" placeholder="例：逸東邨 / 東涌">
-                    <span class="menu-label">終點：</span>
-                    <input type="text" id="traffic-end-input" class="menu-input" placeholder="例：九龍志和街 / 尖沙咀">
-                    <button class="menu-save-btn" onclick="saveTrafficConfig()">保存起終點設定</button>
-                </div>
-
-                <div class="traffic-content" id="traffic-content">
-                    <div class="loading-text" style="padding: 10px;">加載最新交通消息...</div>
-                </div>
             </div>
         </div>
 
         <section class="bus-panel">
             <div class="panel-title">
-                <span>🚌 巴士到站動態 (每30秒更新)</span>
+                <span>🚌 巴士到站動態 (每1分鐘更新)</span>
                 <button class="settings-btn" onclick="openSettings()">⚙️ 路線設定</button>
             </div>
             <div class="bus-list" id="bus-list"></div>
         </section>
     </main>
 
-    <!-- 設定彈窗 Modal -->
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -587,7 +458,8 @@
             <div class="hint-text">
                 💡 <b>填寫指南</b>：<br>
                 • <b>九巴 (KMB)</b>：填 App 站代碼（如 <code>TC188</code>）或 Stop ID，並選擇正確方向。<br>
-                • <b>城巴/嶼巴</b>：直接填 App 內的中文/英文<b>站名</b>（如 <code>東涌纜車站</code>），並選擇去程/返程。
+                • <b>城巴/嶼巴</b>：直接填 App 內的中文/英文<b>站名</b>（如 <code>東涌纜車站</code>），並選擇去程/返程。<br>
+                • <b>時間微調</b>：可針對該路線選擇 -3 至 +3 分鐘（以 30 秒為單位微調）。
             </div>
             <div class="config-list" id="config-list"></div>
             <div class="modal-footer">
@@ -645,9 +517,9 @@
         }
 
         const defaultBuses = [
-            { company: "kmb", route: "1A", dir: "outbound", stop: "TC188", dest_name: "往 尖沙咀碼頭" },
-            { company: "ctb", route: "E33", dir: "outbound", stop: "東涌纜車站", dest_name: "往 機場/東涌" },
-            { company: "nlb", route: "23", dir: "outbound", stop: "昂坪", dest_name: "往 昂坪" }
+            { company: "kmb", route: "1A", dir: "outbound", stop: "TC188", dest_name: "往 尖沙咀碼頭", offset: 0 },
+            { company: "ctb", route: "E33", dir: "outbound", stop: "東涌纜車站", dest_name: "往 機場/東涌", offset: 0 },
+            { company: "nlb", route: "23", dir: "outbound", stop: "昂坪", dest_name: "往 昂坪", offset: 0 }
         ];
 
         let currentBuses = [];
@@ -746,109 +618,6 @@
         fetchWeather();
         setInterval(fetchWeather, 60000);
 
-        /* ------------------ 路面交通起終點及巴士行車時間預測 ------------------ */
-        let trafficConfig = JSON.parse(localStorage.getItem('traffic_cfg')) || { start: "逸東邨", end: "九龍志和街" };
-
-        function updateEstimatedBusTime(start, end) {
-            const timeDisplay = document.getElementById('estimated-bus-time');
-            const str = (start + end).toLowerCase();
-
-            // 針對熱門跨區/過海路線進行動態時間評估
-            if ((str.includes('逸東') || str.includes('東涌')) && (str.includes('志和') || str.includes('佐敦') || str.includes('尖沙咀'))) {
-                timeDisplay.innerText = "約 45 - 60 分鐘";
-            } else if ((str.includes('逸東') || str.includes('東涌')) && (str.includes('機場') || str.includes('博覽館'))) {
-                timeDisplay.innerText = "約 15 - 25 分鐘";
-            } else if ((str.includes('屯門') || str.includes('元朗')) && (str.includes('尖沙咀') || str.includes('中環'))) {
-                timeDisplay.innerText = "約 50 - 70 分鐘";
-            } else if (str.includes('觀塘') && str.includes('旺角')) {
-                timeDisplay.innerText = "約 30 - 45 分鐘";
-            } else {
-                timeDisplay.innerText = "約 35 - 55 分鐘 (視交通而定)";
-            }
-        }
-
-        function initTrafficUI() {
-            document.getElementById('traffic-start-input').value = trafficConfig.start;
-            document.getElementById('traffic-end-input').value = trafficConfig.end;
-            document.getElementById('traffic-route-display').innerText = `${trafficConfig.start} ➔ ${trafficConfig.end}`;
-            updateEstimatedBusTime(trafficConfig.start, trafficConfig.end);
-        }
-
-        function toggleTrafficMenu() {
-            const menu = document.getElementById('traffic-menu');
-            menu.classList.toggle('active');
-        }
-
-        function saveTrafficConfig() {
-            const start = document.getElementById('traffic-start-input').value.trim() || "逸東邨";
-            const end = document.getElementById('traffic-end-input').value.trim() || "九龍志和街";
-            trafficConfig = { start, end };
-            localStorage.setItem('traffic_cfg', JSON.stringify(trafficConfig));
-            document.getElementById('traffic-route-display').innerText = `${start} ➔ ${end}`;
-            updateEstimatedBusTime(start, end);
-            toggleTrafficMenu();
-            fetchTrafficNews();
-        }
-
-        async function fetchTrafficNews() {
-            const container = document.getElementById('traffic-content');
-            try {
-                const res = await fetch('https://www.td.gov.hk/tc/special_news/trafficnews.xml');
-                const text = await res.text();
-                const parser = new DOMParser();
-                const xml = parser.parseFromString(text, 'text/xml');
-                const items = xml.querySelectorAll('message');
-
-                const mainHighways = [
-                    '青嶼幹線', '北大嶼山公路', '汲水門大橋', '青葵公路', '長青隧道', 
-                    '南灣隧道', '昂船洲大橋', '葵涌道', '西九龍公路', '渡船街', 
-                    '加士居道', '漆咸道', '獅子山隧道', '大老山隧道', '屯門公路', '吐露港公路'
-                ];
-                
-                const cleanStart = trafficConfig.start.replace(/九龍|新界|香港島|香港/g, '').trim();
-                const cleanEnd = trafficConfig.end.replace(/九龍|新界|香港島|香港/g, '').trim();
-
-                const routeKeywords = [
-                    trafficConfig.start, trafficConfig.end,
-                    cleanStart, cleanEnd,
-                    ...mainHighways
-                ].filter(Boolean);
-
-                let matchedNews = [];
-
-                items.forEach(item => {
-                    const content = item.querySelector('EngText')?.textContent || item.querySelector('ChinText')?.textContent || item.textContent;
-                    const dateStr = item.querySelector('ReferenceDate')?.textContent || '';
-                    
-                    const isMatched = routeKeywords.some(kw => kw.length > 1 && content.includes(kw));
-                    if (isMatched && content.trim()) {
-                        matchedNews.push({
-                            time: dateStr,
-                            text: content.trim()
-                        });
-                    }
-                });
-
-                if (matchedNews.length > 0) {
-                    container.innerHTML = matchedNews.map(news => `
-                        <div class="traffic-item">
-                            ${news.time ? `<div class="traffic-item-time">${news.time}</div>` : ''}
-                            <div>${news.text}</div>
-                        </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = `<div class="traffic-status-normal">🟢 目前沿途路面交通大致暢順，未有特別封路或阻塞報告。</div>`;
-                }
-            } catch (err) {
-                container.innerHTML = `<div class="traffic-status-normal">🟢 目前沿途路面交通大致暢順。</div>`;
-            }
-        }
-
-        initTrafficUI();
-        fetchTrafficNews();
-        setInterval(fetchTrafficNews, 60000);
-
-        /* ------------------ 巴士到站 API ------------------ */
         async function getKMBSeta(route, stopCode, dir) {
             try {
                 let targetStopId = stopCode;
@@ -927,6 +696,7 @@
 
             for (let bus of sortedBuses) {
                 const busDir = bus.dir || 'outbound';
+                const busOffset = parseFloat(bus.offset || 0); // 支援 30 秒 (0.5 分鐘) 的小數點計算
                 const busKey = `${bus.company}_${bus.route}_${busDir}_${bus.stop}`;
                 let rawEtas = [];
 
@@ -947,24 +717,26 @@
                 let etas = (rawEtas || []).map(item => {
                     if (!item || !item.eta) return null;
                     const etaTime = new Date(item.eta);
-                    let diffMins = Math.round((etaTime - now) / 60000);
-                    if (isNaN(diffMins)) return null;
+                    
+                    // 以秒數精確計算時間差並加入微調偏移量
+                    const diffSecs = Math.round((etaTime - now) / 1000) + (busOffset * 60);
+                    if (isNaN(diffSecs)) return null;
 
-                    if (bus.company === 'kmb') {
-                        diffMins -= 1;
-                    }
-
-                    if (diffMins < 0) return null;
-                    if (diffMins <= 1) return '即將到站';
+                    if (diffSecs < 0) return null;
+                    if (diffSecs <= 60) return '即將到站';
+                    
+                    const diffMins = Math.round(diffSecs / 60);
                     return `${diffMins} 分鐘`;
                 }).filter(Boolean).slice(0, 3);
 
                 while (etas.length < 3) etas.push('-');
 
                 const isArr = etas[0] === '即將到站';
-                const companyTag = bus.company === 'kmb' ? '<span class="bus-company-tag tag-kmb">九巴</span>' : 
-                                   bus.company === 'ctb' ? '<span class="bus-company-tag tag-ctb">城巴</span>' : 
-                                   '<span class="bus-company-tag tag-nlb">嶼巴</span>';
+                
+                // 巴士公司矢量 Logo 標籤
+                const companyLogo = bus.company === 'kmb' ? '<span class="bus-logo-badge logo-kmb">KMB 九巴</span>' : 
+                                    bus.company === 'ctb' ? '<span class="bus-logo-badge logo-ctb">CTB 城巴</span>' : 
+                                    '<span class="bus-logo-badge logo-nlb">NLB 嶼巴</span>';
 
                 const itemClass = bus.company === 'kmb' ? 'item-kmb' :
                                   bus.company === 'ctb' ? 'item-ctb' : 'item-nlb';
@@ -973,7 +745,7 @@
                     <div class="bus-item ${itemClass}">
                         <div class="bus-header">
                             <div class="bus-title-group">
-                                ${companyTag}
+                                ${companyLogo}
                                 <div class="bus-name">${bus.route.toUpperCase()}</div>
                             </div>
                             <div class="bus-dest">${bus.dest_name}</div>
@@ -990,7 +762,7 @@
         }
 
         fetchBusData();
-        setInterval(fetchBusData, 30000);
+        setInterval(fetchBusData, 60000);
 
         function openSettings() {
             loadBusConfigs();
@@ -1008,6 +780,8 @@
 
             currentBuses.forEach((bus, index) => {
                 const busDir = bus.dir || 'outbound';
+                const busOffset = bus.offset !== undefined ? parseFloat(bus.offset) : 0;
+
                 const itemHtml = `
                     <div class="config-item">
                         <div class="config-row">
@@ -1026,6 +800,21 @@
                         <div class="config-row">
                             <input type="text" class="config-input bus-stop" placeholder="App 站代號 (如 TC188) 或 站名 (如 東涌纜車站)" value="${bus.stop}">
                             <input type="text" class="config-input bus-dest" placeholder="顯示目的地 (如 往 尖沙咀)" value="${bus.dest_name}">
+                            <select class="config-select bus-offset" title="調整顯示時間">
+                                <option value="3" ${busOffset === 3 ? 'selected' : ''}>+3分00秒 (+3.0)</option>
+                                <option value="2.5" ${busOffset === 2.5 ? 'selected' : ''}>+2分30秒 (+2.5)</option>
+                                <option value="2" ${busOffset === 2 ? 'selected' : ''}>+2分00秒 (+2.0)</option>
+                                <option value="1.5" ${busOffset === 1.5 ? 'selected' : ''}>+1分30秒 (+1.5)</option>
+                                <option value="1" ${busOffset === 1 ? 'selected' : ''}>+1分00秒 (+1.0)</option>
+                                <option value="0.5" ${busOffset === 0.5 ? 'selected' : ''}>+0分30秒 (+0.5)</option>
+                                <option value="0" ${busOffset === 0 ? 'selected' : ''}>不微調 (0)</option>
+                                <option value="-0.5" ${busOffset === -0.5 ? 'selected' : ''}>-0分30秒 (-0.5)</option>
+                                <option value="-1" ${busOffset === -1 ? 'selected' : ''}>-1分00秒 (-1.0)</option>
+                                <option value="-1.5" ${busOffset === -1.5 ? 'selected' : ''}>-1分30秒 (-1.5)</option>
+                                <option value="-2" ${busOffset === -2 ? 'selected' : ''}>-2分00秒 (-2.0)</option>
+                                <option value="-2.5" ${busOffset === -2.5 ? 'selected' : ''}>-2分30秒 (-2.5)</option>
+                                <option value="-3" ${busOffset === -3 ? 'selected' : ''}>-3分00秒 (-3.0)</option>
+                            </select>
                         </div>
                     </div>
                 `;
@@ -1034,7 +823,7 @@
         }
 
         function addNewBusConfig() {
-            currentBuses.push({ company: "kmb", route: "", dir: "outbound", stop: "", dest_name: "" });
+            currentBuses.push({ company: "kmb", route: "", dir: "outbound", stop: "", dest_name: "", offset: 0 });
             renderSettingsList();
         }
 
@@ -1053,9 +842,10 @@
                 const dir = item.querySelector('.bus-dir').value;
                 const stop = item.querySelector('.bus-stop').value.trim();
                 const dest_name = item.querySelector('.bus-dest').value.trim();
+                const offset = parseFloat(item.querySelector('.bus-offset').value);
 
                 if (route && stop) {
-                    newConfigs.push({ company, route, dir, stop, dest_name });
+                    newConfigs.push({ company, route, dir, stop, dest_name, offset });
                 }
             });
 
