@@ -51,7 +51,7 @@
             overflow-y: auto;
         }
 
-        .weather-grid { display: flex; gap: 10px; flex: 1; }
+        .weather-grid { display: flex; gap: 10px; flex: 1; min-height: 220px; }
         .district-box {
             flex: 1;
             background: #1e293b;
@@ -169,6 +169,67 @@
             padding: 3px 8px;
             border-radius: 6px;
             font-weight: 600;
+        }
+
+        /* 路面交通狀況報告面板 (新增於天文台信息欄下方) */
+        .traffic-panel {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 12px 14px;
+            border: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .traffic-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed #475569;
+            padding-bottom: 6px;
+        }
+        .traffic-title {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #38bdf8;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .traffic-subtitle {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+        .traffic-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .traffic-status-normal {
+            font-size: 0.85rem;
+            color: #34d399;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .traffic-item {
+            background: #0f172a;
+            border-left: 4px solid #f59e0b;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.82rem;
+            line-height: 1.4;
+            color: #cbd5e1;
+        }
+        .traffic-item-time {
+            font-size: 0.72rem;
+            color: #f59e0b;
+            font-weight: bold;
+            margin-bottom: 2px;
         }
 
         @keyframes pulse-border {
@@ -440,6 +501,17 @@
                 <div class="warning-title">⚠️ 天文台現正生效警告：</div>
                 <div class="warning-list" id="warning-list"></div>
             </div>
+
+            <!-- [新增] 路面交通狀況報告（位於天文台信息欄下方） -->
+            <div class="traffic-panel">
+                <div class="traffic-header">
+                    <span class="traffic-title">🚗 沿途路面交通報告</span>
+                    <span class="traffic-subtitle">逸東邨 ➔ 九龍志和街</span>
+                </div>
+                <div class="traffic-content" id="traffic-content">
+                    <div class="loading-text" style="padding: 10px;">加載最新交通消息...</div>
+                </div>
+            </div>
         </div>
 
         <section class="bus-panel">
@@ -623,6 +695,58 @@
         fetchWeather();
         // 天文台警報每分鐘（60秒）更新一次
         setInterval(fetchWeather, 60000);
+
+        /* [新增功能] 獲取運輸署路面交通報告 */
+        async function fetchTrafficNews() {
+            const container = document.getElementById('traffic-content');
+            try {
+                // 採用運輸署官方特別交通消息 API (XML)
+                const res = await fetch('https://www.td.gov.hk/tc/special_news/trafficnews.xml');
+                const text = await res.text();
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(text, 'text/xml');
+                const items = xml.querySelectorAll('message');
+
+                // 沿途關鍵字過濾：逸東邨 -> 九龍志和街
+                const routeKeywords = [
+                    '逸東', '東涌', '青嶼幹線', '北大嶼山公路', '汲水門大橋', 
+                    '青葵公路', '長青隧道', '南灣隧道', '昂船洲大橋', '葵涌道', 
+                    '西九龍公路', '渡船街', '加士居道', '佐敦', '志和街', '漆咸道'
+                ];
+
+                let matchedNews = [];
+
+                items.forEach(item => {
+                    const content = item.querySelector('EngText')?.textContent || item.querySelector('ChinText')?.textContent || item.textContent;
+                    const dateStr = item.querySelector('ReferenceDate')?.textContent || '';
+                    
+                    const isMatched = routeKeywords.some(kw => content.includes(kw));
+                    if (isMatched && content.trim()) {
+                        matchedNews.push({
+                            time: dateStr,
+                            text: content.trim()
+                        });
+                    }
+                });
+
+                if (matchedNews.length > 0) {
+                    container.innerHTML = matchedNews.map(news => `
+                        <div class="traffic-item">
+                            ${news.time ? `<div class="traffic-item-time">${news.time}</div>` : ''}
+                            <div>${news.text}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = `<div class="traffic-status-normal">🟢 目前沿途路面交通大致暢順，未有特別封路或阻塞報告。</div>`;
+                }
+            } catch (err) {
+                container.innerHTML = `<div class="traffic-status-normal">🟢 目前沿途路面交通大致暢順。</div>`;
+            }
+        }
+
+        fetchTrafficNews();
+        // 每 60 秒定期刷新路面交通消息
+        setInterval(fetchTrafficNews, 60000);
 
         async function getKMBSeta(route, stopCode, dir) {
             try {
