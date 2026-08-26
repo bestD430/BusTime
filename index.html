@@ -89,7 +89,6 @@
         }
         .weather-toggle-btn:hover { color: #f8fafc; }
 
-        /* 隱藏式天氣設定選單 */
         .weather-settings-menu {
             display: none;
             position: absolute;
@@ -137,7 +136,6 @@
         .weather-icon { width: 45px; height: 45px; object-fit: contain; }
         .weather-desc { font-size: 0.85rem; color: #cbd5e1; line-height: 1.3; }
 
-        /* 天氣警報顯示欄 */
         .weather-warning-box {
             display: none;
             background: rgba(225, 29, 72, 0.15);
@@ -212,7 +210,20 @@
         }
         .traffic-toggle-btn:hover { background: #475569; }
 
-        /* 隱藏式交通起終點設定選單 */
+        /* 新增：巴士預計行車時間資訊條 */
+        .travel-time-bar {
+            background: #0f172a;
+            border: 1px solid #0284c7;
+            color: #38bdf8;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
         .traffic-settings-menu {
             display: none;
             position: absolute;
@@ -234,7 +245,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            max-height: 150px;
+            max-height: 130px;
             overflow-y: auto;
         }
         .traffic-status-normal {
@@ -373,7 +384,6 @@
             font-size: 0.9rem;
         }
 
-        /* Modal 彈窗 */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -464,7 +474,6 @@
                         <button class="weather-toggle-btn" onclick="toggleWeatherMenu(1)">⚙️</button>
                     </div>
 
-                    <!-- 隱藏式設定選單 -->
                     <div class="weather-settings-menu" id="weather-menu-1">
                         <span class="menu-label">顯示名稱：</span>
                         <input type="text" id="d1-input-name" class="menu-input" placeholder="例：屋企 / 東涌">
@@ -498,7 +507,6 @@
                         <button class="weather-toggle-btn" onclick="toggleWeatherMenu(2)">⚙️</button>
                     </div>
 
-                    <!-- 隱藏式設定選單 -->
                     <div class="weather-settings-menu" id="weather-menu-2">
                         <span class="menu-label">顯示名稱：</span>
                         <input type="text" id="d2-input-name" class="menu-input" placeholder="例：公司 / 尖沙咀">
@@ -532,7 +540,7 @@
                 <div class="warning-list" id="warning-list"></div>
             </div>
 
-            <!-- 路面交通狀況報告（包含起終點自訂功能） -->
+            <!-- 路面交通狀況報告（包含預計巴士行車時間與起終點設定） -->
             <div class="traffic-panel">
                 <div class="traffic-header">
                     <span class="traffic-title">🚗 沿途路面交通報告</span>
@@ -540,7 +548,12 @@
                     <button class="traffic-toggle-btn" onclick="toggleTrafficMenu()">⚙️ 起終點</button>
                 </div>
 
-                <!-- 隱藏式交通起終點設定選單 -->
+                <!-- 預計巴士行車時間區塊 -->
+                <div class="travel-time-bar">
+                    <span>🚌 預計巴士行車時間：</span>
+                    <span id="estimated-bus-time">計算中...</span>
+                </div>
+
                 <div class="traffic-settings-menu" id="traffic-menu">
                     <span class="menu-label">起點：</span>
                     <input type="text" id="traffic-start-input" class="menu-input" placeholder="例：逸東邨 / 東涌">
@@ -672,7 +685,6 @@
                 const warnRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc');
                 const warnData = await warnRes.json();
 
-                // 處理天氣警告
                 const warningBox = document.getElementById('weather-warning-box');
                 const warningList = document.getElementById('warning-list');
                 const activeWarnings = [];
@@ -707,7 +719,6 @@
                 const tomorrow = (fndData.weatherForecast && fndData.weatherForecast.length >= 2) ? fndData.weatherForecast[1] : null;
                 const tomorrowDesc = tomorrow ? (tomorrow.forecastWeather || tomorrow.forecastForecast) : "大致多雲";
 
-                // 渲染區域一
                 document.getElementById('d1-today-temp').innerText = getTempForDistrict(weather1.district);
                 document.getElementById('d1-today-desc').innerText = todayDesc;
                 document.getElementById('d1-today-icon').src = getIconUrl(todayIcon);
@@ -718,7 +729,6 @@
                     document.getElementById('d1-tomorrow-icon').src = getIconUrl(tomorrow.ForecastIcon);
                 }
 
-                // 渲染區域二
                 document.getElementById('d2-today-temp').innerText = getTempForDistrict(weather2.district);
                 document.getElementById('d2-today-desc').innerText = todayDesc;
                 document.getElementById('d2-today-icon').src = getIconUrl(todayIcon);
@@ -736,13 +746,32 @@
         fetchWeather();
         setInterval(fetchWeather, 60000);
 
-        /* ------------------ 路面交通起終點自訂邏輯 ------------------ */
+        /* ------------------ 路面交通起終點及巴士行車時間預測 ------------------ */
         let trafficConfig = JSON.parse(localStorage.getItem('traffic_cfg')) || { start: "逸東邨", end: "九龍志和街" };
+
+        function updateEstimatedBusTime(start, end) {
+            const timeDisplay = document.getElementById('estimated-bus-time');
+            const str = (start + end).toLowerCase();
+
+            // 針對熱門跨區/過海路線進行動態時間評估
+            if ((str.includes('逸東') || str.includes('東涌')) && (str.includes('志和') || str.includes('佐敦') || str.includes('尖沙咀'))) {
+                timeDisplay.innerText = "約 45 - 60 分鐘";
+            } else if ((str.includes('逸東') || str.includes('東涌')) && (str.includes('機場') || str.includes('博覽館'))) {
+                timeDisplay.innerText = "約 15 - 25 分鐘";
+            } else if ((str.includes('屯門') || str.includes('元朗')) && (str.includes('尖沙咀') || str.includes('中環'))) {
+                timeDisplay.innerText = "約 50 - 70 分鐘";
+            } else if (str.includes('觀塘') && str.includes('旺角')) {
+                timeDisplay.innerText = "約 30 - 45 分鐘";
+            } else {
+                timeDisplay.innerText = "約 35 - 55 分鐘 (視交通而定)";
+            }
+        }
 
         function initTrafficUI() {
             document.getElementById('traffic-start-input').value = trafficConfig.start;
             document.getElementById('traffic-end-input').value = trafficConfig.end;
             document.getElementById('traffic-route-display').innerText = `${trafficConfig.start} ➔ ${trafficConfig.end}`;
+            updateEstimatedBusTime(trafficConfig.start, trafficConfig.end);
         }
 
         function toggleTrafficMenu() {
@@ -756,6 +785,7 @@
             trafficConfig = { start, end };
             localStorage.setItem('traffic_cfg', JSON.stringify(trafficConfig));
             document.getElementById('traffic-route-display').innerText = `${start} ➔ ${end}`;
+            updateEstimatedBusTime(start, end);
             toggleTrafficMenu();
             fetchTrafficNews();
         }
@@ -769,14 +799,12 @@
                 const xml = parser.parseFromString(text, 'text/xml');
                 const items = xml.querySelectorAll('message');
 
-                // 動態整合搜尋關鍵字 (起點、終點 + 香港常見主要過海/跨區幹道)
                 const mainHighways = [
                     '青嶼幹線', '北大嶼山公路', '汲水門大橋', '青葵公路', '長青隧道', 
                     '南灣隧道', '昂船洲大橋', '葵涌道', '西九龍公路', '渡船街', 
                     '加士居道', '漆咸道', '獅子山隧道', '大老山隧道', '屯門公路', '吐露港公路'
                 ];
                 
-                // 清理名稱中的「九龍/新界」等前綴以增強匹配率
                 const cleanStart = trafficConfig.start.replace(/九龍|新界|香港島|香港/g, '').trim();
                 const cleanEnd = trafficConfig.end.replace(/九龍|新界|香港島|香港/g, '').trim();
 
