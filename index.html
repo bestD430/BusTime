@@ -28,7 +28,7 @@
             gap: 8px;
         }
 
-        /* 政府停課特別消息顯示欄 (位於時間正上方) */
+        /* 政府停課特別消息顯示欄 */
         .school-closure-box {
             display: none;
             width: 100%;
@@ -118,14 +118,14 @@
         }
 
         .left-panel {
-            flex: 1;
+            flex: 1.2;
             display: flex;
             flex-direction: column;
             gap: 12px;
             overflow-y: auto;
         }
 
-        .weather-grid { display: flex; gap: 10px; flex: 1; min-height: 220px; }
+        .weather-grid { display: flex; gap: 10px; flex: 0 0 auto; min-height: 190px; }
         .district-box {
             flex: 1;
             background: #1e293b;
@@ -202,13 +202,81 @@
             margin-top: 4px;
         }
 
-        .day-weather { margin-bottom: 8px; }
+        .day-weather { margin-bottom: 4px; }
         .day-weather:last-child { margin-bottom: 0; }
-        .day-label { font-size: 0.85rem; color: #94a3b8; }
-        .temp-row { display: flex; justify-content: space-between; align-items: center; margin: 4px 0; }
-        .temp-val { font-size: 1.35rem; font-weight: bold; }
-        .weather-icon { width: 45px; height: 45px; object-fit: contain; }
-        .weather-desc { font-size: 0.85rem; color: #cbd5e1; line-height: 1.3; }
+        .day-label { font-size: 0.8rem; color: #94a3b8; }
+        .temp-row { display: flex; justify-content: space-between; align-items: center; margin: 2px 0; }
+        .temp-val { font-size: 1.2rem; font-weight: bold; }
+        .weather-icon { width: 38px; height: 38px; object-fit: contain; }
+        .weather-desc { font-size: 0.8rem; color: #cbd5e1; line-height: 1.2; }
+
+        /* Google Maps 交通狀況及行車時間樣式 */
+        .traffic-panel {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 14px;
+            border: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .traffic-header-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .route-display-header {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 1px dashed rgba(56, 189, 248, 0.3);
+        }
+
+        .travel-time-container {
+            display: flex;
+            gap: 10px;
+        }
+        .travel-card {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .travel-icon { font-size: 1.5rem; }
+        .travel-info { text-align: right; }
+        .travel-type { font-size: 0.75rem; color: #94a3b8; }
+        .travel-val { font-size: 1.2rem; font-weight: bold; color: #38bdf8; }
+
+        .map-container {
+            flex: 1;
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #475569;
+            background: #0f172a;
+            min-height: 200px;
+        }
+        .map-container.hidden {
+            display: none !important;
+        }
+        .map-iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
 
         @keyframes pulse-red {
             0% { border-color: #f43f5e; box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
@@ -217,7 +285,7 @@
         }
 
         .bus-panel {
-            flex: 1.3;
+            flex: 1;
             background: #1e293b;
             border-radius: 16px;
             padding: 14px;
@@ -227,7 +295,7 @@
         .panel-title {
             font-size: 1rem;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
             color: #f59e0b;
             display: flex;
             justify-content: space-between;
@@ -321,6 +389,7 @@
             font-size: 0.9rem;
         }
 
+        /* Modal 樣式 */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -397,13 +466,11 @@
 <body>
 
     <header>
-        <!-- 政府新聞網 停課特別消息 (位於時間正上方) -->
         <div class="school-closure-box" id="school-closure-box">
             <div class="closure-title">🚨 政府特別公告（停課消息）：</div>
             <div class="closure-content" id="closure-content">加載中...</div>
         </div>
 
-        <!-- 天氣警報顯示欄 -->
         <div class="weather-warning-box" id="weather-warning-box">
             <div class="warning-title">⚠️ 天文台現正生效警告：</div>
             <div class="warning-list" id="warning-list"></div>
@@ -418,7 +485,6 @@
     <main>
         <div class="left-panel">
             <div class="weather-grid">
-                <!-- 區域一 -->
                 <div class="district-box">
                     <div class="district-header">
                         <span class="district-title" id="d1-custom-title">📍 東涌</span>
@@ -451,7 +517,6 @@
                     </div>
                 </div>
 
-                <!-- 區域二 -->
                 <div class="district-box">
                     <div class="district-header">
                         <span class="district-title" id="d2-custom-title">📍 尖沙咀</span>
@@ -484,6 +549,43 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Google Maps 交通狀況板塊 -->
+            <div class="traffic-panel">
+                <div class="panel-title">
+                    <span>🚗 路線行程時間估計</span>
+                    <div class="traffic-header-actions">
+                        <button class="settings-btn" id="toggle-map-btn" onclick="toggleMapVisibility()">🗺️ 隱藏地圖</button>
+                        <button class="settings-btn" onclick="openRouteModal()">⚙️ 路線設定</button>
+                    </div>
+                </div>
+
+                <!-- 顯示設定的起點與終點名稱 (已自動剔除「香港」) -->
+                <div class="route-display-header">
+                    📍 <span id="disp-origin">逸東邨</span> ➔ <span id="disp-dest">滿東邨</span>
+                </div>
+
+                <div class="travel-time-container">
+                    <div class="travel-card">
+                        <span class="travel-icon">🚗</span>
+                        <div class="travel-info">
+                            <div class="travel-type">私家車預估時間</div>
+                            <div class="travel-val" id="car-travel-time">計算中...</div>
+                        </div>
+                    </div>
+                    <div class="travel-card">
+                        <span class="travel-icon">🚌</span>
+                        <div class="travel-info">
+                            <div class="travel-type">巴士預估時間</div>
+                            <div class="travel-val" id="bus-travel-time">計算中...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="map-container" id="map-container">
+                    <iframe id="traffic-map-iframe" class="map-iframe" loading="lazy" allowfullscreen src=""></iframe>
+                </div>
+            </div>
         </div>
 
         <section class="bus-panel">
@@ -495,7 +597,30 @@
         </section>
     </main>
 
-    <!-- 設定彈窗 Modal -->
+    <!-- 路線設定 Modal -->
+    <div class="modal-overlay" id="route-modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <div class="modal-title">⚙️ 設定行車起點與終點</div>
+                <button class="modal-close" onclick="closeRouteModal()">&times;</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin: 10px 0;">
+                <div>
+                    <label class="menu-label" style="display:block; margin-bottom: 4px;">起點名稱 / 地址：</label>
+                    <input type="text" id="modal-origin-input" class="menu-input" placeholder="例: 逸東邨">
+                </div>
+                <div>
+                    <label class="menu-label" style="display:block; margin-bottom: 4px;">終點名稱 / 地址：</label>
+                    <input type="text" id="modal-dest-input" class="menu-input" placeholder="例: 九龍志和街">
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: flex-end;">
+                <button class="action-btn" onclick="saveRouteModalConfig()">💾 保存更新</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 巴士設定彈窗 Modal -->
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -526,6 +651,160 @@
 
         let weather1 = JSON.parse(localStorage.getItem('weather_cfg_1')) || { name: "東涌", district: "東涌" };
         let weather2 = JSON.parse(localStorage.getItem('weather_cfg_2')) || { name: "尖沙咀", district: "尖沙咀" };
+
+        /* ------------------ Google Maps 及 交通時間計算數據 ------------------ */
+        let trafficConfig = JSON.parse(localStorage.getItem('traffic_cfg')) || {
+            origin: "逸東邨, 香港",
+            destination: "滿東邨, 香港"
+        };
+
+        let isMapHidden = localStorage.getItem('traffic_map_hidden') === 'true';
+
+        // 輔助函式：將顯示文字中的「, 香港」或「香港」去除
+        function cleanHongKongText(text) {
+            if (!text) return '';
+            return text.replace(/,?\s*香港/g, '').trim();
+        }
+
+        function initTrafficUI() {
+            document.getElementById('disp-origin').innerText = cleanHongKongText(trafficConfig.origin);
+            document.getElementById('disp-dest').innerText = cleanHongKongText(trafficConfig.destination);
+            
+            const mapContainer = document.getElementById('map-container');
+            const toggleBtn = document.getElementById('toggle-map-btn');
+            
+            if (isMapHidden) {
+                mapContainer.classList.add('hidden');
+                toggleBtn.innerText = "🗺️ 顯示地圖";
+            } else {
+                mapContainer.classList.remove('hidden');
+                toggleBtn.innerText = "🗺️ 隱藏地圖";
+                updateTrafficMap();
+            }
+
+            calculateTravelTimes();
+        }
+
+        function toggleMapVisibility() {
+            const mapContainer = document.getElementById('map-container');
+            const toggleBtn = document.getElementById('toggle-map-btn');
+            
+            isMapHidden = !isMapHidden;
+            localStorage.setItem('traffic_map_hidden', isMapHidden);
+
+            if (isMapHidden) {
+                mapContainer.classList.add('hidden');
+                toggleBtn.innerText = "🗺️ 顯示地圖";
+            } else {
+                mapContainer.classList.remove('hidden');
+                toggleBtn.innerText = "🗺️ 隱藏地圖";
+                updateTrafficMap();
+            }
+        }
+
+        function updateTrafficMap() {
+            if (isMapHidden) return;
+            const originStr = trafficConfig.origin.includes('香港') ? trafficConfig.origin : `${trafficConfig.origin}, 香港`;
+            const destStr = trafficConfig.destination.includes('香港') ? trafficConfig.destination : `${trafficConfig.destination}, 香港`;
+
+            const origin = encodeURIComponent(originStr);
+            const destination = encodeURIComponent(destStr);
+            const mapUrl = `https://maps.google.com/maps?saddr=${origin}&daddr=${destination}&dirflg=d&output=embed`;
+            document.getElementById('traffic-map-iframe').src = mapUrl;
+        }
+
+        function openRouteModal() {
+            document.getElementById('modal-origin-input').value = cleanHongKongText(trafficConfig.origin);
+            document.getElementById('modal-dest-input').value = cleanHongKongText(trafficConfig.destination);
+            document.getElementById('route-modal').classList.add('active');
+        }
+
+        function closeRouteModal() {
+            document.getElementById('route-modal').classList.remove('active');
+        }
+
+        function saveRouteModalConfig() {
+            const origin = document.getElementById('modal-origin-input').value.trim();
+            const destination = document.getElementById('modal-dest-input').value.trim();
+
+            if (origin && destination) {
+                trafficConfig = { origin, destination };
+                localStorage.setItem('traffic_cfg', JSON.stringify(trafficConfig));
+                
+                document.getElementById('disp-origin').innerText = cleanHongKongText(origin);
+                document.getElementById('disp-dest').innerText = cleanHongKongText(destination);
+                
+                closeRouteModal();
+                updateTrafficMap();
+                calculateTravelTimes();
+            }
+        }
+
+        /* ------------------ 動態計算真實行車時間 (OSRM 路由 API) ------------------ */
+        async function calculateTravelTimes() {
+            const carTimeElem = document.getElementById('car-travel-time');
+            const busTimeElem = document.getElementById('bus-travel-time');
+            
+            carTimeElem.innerText = "計算中...";
+            busTimeElem.innerText = "計算中...";
+
+            const originStr = trafficConfig.origin.includes('香港') ? trafficConfig.origin : `${trafficConfig.origin}, 香港`;
+            const destStr = trafficConfig.destination.includes('香港') ? trafficConfig.destination : `${trafficConfig.destination}, 香港`;
+
+            try {
+                // 1. 地理編碼：將地點名稱轉換為經緯度
+                const geocodeUrl = (address) => 
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+
+                const [originRes, destRes] = await Promise.all([
+                    fetch(geocodeUrl(originStr)).then(r => r.json()),
+                    fetch(geocodeUrl(destStr)).then(r => r.json())
+                ]);
+
+                if (!originRes || !originRes.length || !destRes || !destRes.length) {
+                    throw new Error("無法定位地址");
+                }
+
+                const originCoords = `${originRes[0].lon},${originRes[0].lat}`;
+                const destCoords = `${destRes[0].lon},${destRes[0].lat}`;
+
+                // 2. 呼叫 OSRM API 計算實際駕車時間
+                const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${originCoords};${destCoords}?overview=false`;
+                const osrmRes = await fetch(osrmUrl).then(r => r.json());
+
+                if (osrmRes.code !== 'Ok' || !osrmRes.routes.length) {
+                    throw new Error("無法計算路線");
+                }
+
+                const durationSeconds = osrmRes.routes[0].duration;
+                
+                // 3. 取得即時交通快慢加減係數
+                let speedFactor = 1.0;
+                try {
+                    const speedRes = await fetch('https://rt.data.gov.hk/v1/transport/traffic-speed-map');
+                    const speedData = await speedRes.json();
+                    if (Array.isArray(speedData)) {
+                        const congestedRoads = speedData.filter(r => r.TRAFFIC_SPEED_LEVEL === 'S' || r.TRAFFIC_SPEED_LEVEL === 'M');
+                        if (congestedRoads.length > 30) speedFactor = 1.3;
+                        else if (congestedRoads.length > 15) speedFactor = 1.15;
+                    }
+                } catch(e) {}
+
+                // 計算私家車與巴士時間
+                let carMinutes = Math.max(2, Math.round((durationSeconds / 60) * speedFactor));
+                let busMinutes = carMinutes < 10 
+                    ? Math.round(carMinutes * 1.5) + 3 
+                    : Math.round(carMinutes * 1.35) + 5;
+
+                carTimeElem.innerText = `約 ${carMinutes} 分鐘`;
+                busTimeElem.innerText = `約 ${busMinutes} 分鐘`;
+
+            } catch (e) {
+                console.error("時間計算失敗：", e);
+                carTimeElem.innerText = "無法估算";
+                busTimeElem.innerText = "無法估算";
+            }
+        }
 
         function initDistrictSelects() {
             const select1 = document.getElementById('district1-select');
@@ -696,8 +975,10 @@
         initDistrictSelects();
         fetchWeather();
         fetchGovSchoolClosureNotice();
+        initTrafficUI();
         setInterval(fetchWeather, 60000);
         setInterval(fetchGovSchoolClosureNotice, 60000);
+        setInterval(calculateTravelTimes, 120000);
 
         /* ------------------ 巴士到站 API ------------------ */
         async function getKMBSeta(route, stopCode, dir) {
@@ -778,7 +1059,7 @@
 
             for (let bus of sortedBuses) {
                 const busDir = bus.dir || 'outbound';
-                const busOffset = parseFloat(bus.offset || 0); // 時間微調（分鐘）
+                const busOffset = parseFloat(bus.offset || 0);
                 const busKey = `${bus.company}_${bus.route}_${busDir}_${bus.stop}`;
                 let rawEtas = [];
 
@@ -800,11 +1081,10 @@
                     if (!item || !item.eta) return null;
                     const etaTime = new Date(item.eta);
                     
-                    // 倒數總秒數計算 (加上微調偏移)
                     let totalDiffSeconds = Math.round((etaTime - now) / 1000) + (busOffset * 60);
 
                     if (bus.company === 'kmb') {
-                        totalDiffSeconds -= 60; // 九巴預設偏慢1分鐘基準修正
+                        totalDiffSeconds -= 60;
                     }
 
                     if (totalDiffSeconds < 0) return null;
@@ -861,7 +1141,6 @@
             const container = document.getElementById('config-list');
             container.innerHTML = '';
 
-            // 生成 -3分鐘 到 +3分鐘（步長0.5，即30秒）的下拉選單選項
             const generateOffsetOptions = (selectedVal) => {
                 let options = '';
                 for (let sec = -180; sec <= 180; sec += 30) {
