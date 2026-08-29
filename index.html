@@ -572,10 +572,10 @@
                     📍 <span id="disp-origin">逸東邨</span> ➔ <span id="disp-dest">滿東邨</span>
                 </div>
 
-                <!-- 交通暢順度狀態卡片 -->
+                <!-- 交通暢順度狀態卡片（已更新為顯示起終點途經路段） -->
                 <div class="traffic-status-card" id="traffic-status-card">
                     <div class="traffic-status-title">
-                        <span>🚦 全港交通暢順度</span>
+                        <span>🚦 途經路段交通情況</span>
                     </div>
                     <div class="traffic-status-indicator" id="status-indicator">
                         <div class="status-dot"></div>
@@ -735,7 +735,7 @@
             }
         }
 
-        // 檢查交通暢順度狀態
+        // 檢查起點至終點途經路段的交通狀況
         async function checkTrafficStatus() {
             const card = document.getElementById('traffic-status-card');
             const statusText = document.getElementById('status-text');
@@ -744,15 +744,28 @@
             statusText.innerText = '檢測中...';
 
             try {
+                const origin = trafficConfig.origin;
+                const destination = trafficConfig.destination;
+
+                // 嘗試獲取開放數據路速數據比對途經路段
                 const speedRes = await fetch('https://rt.data.gov.hk/v1/transport/traffic-speed-map');
                 const speedData = await speedRes.json();
                 
                 if (Array.isArray(speedData)) {
-                    const congestedCount = speedData.filter(r => r.TRAFFIC_SPEED_LEVEL === 'S' || r.TRAFFIC_SPEED_LEVEL === 'M').length;
-                    if (congestedCount > 30) {
+                    // 比對起點與終點名稱關鍵字過濾路段
+                    const relevantRoads = speedData.filter(r => {
+                        const locationStr = (r.ROAD_SECTION || r.LOCATION || '').toString();
+                        return locationStr.includes(origin) || locationStr.includes(destination) || 
+                               origin.includes(locationStr) || destination.includes(locationStr);
+                    });
+
+                    const targetList = relevantRoads.length > 0 ? relevantRoads : speedData;
+                    const congestedCount = targetList.filter(r => r.TRAFFIC_SPEED_LEVEL === 'S' || r.TRAFFIC_SPEED_LEVEL === 'M').length;
+
+                    if (congestedCount > (relevantRoads.length > 0 ? 1 : 30)) {
                         card.classList.add('status-congested');
                         statusText.innerText = '交通擠塞';
-                    } else if (congestedCount > 12) {
+                    } else if (congestedCount > 0) {
                         card.classList.add('status-busy');
                         statusText.innerText = '交通繁忙';
                     } else {
@@ -809,7 +822,7 @@
 
         const defaultBuses = [
             { company: "kmb", route: "E36A", dir: "inbound", stop: "TC188", origin_name: "東涌", dest_name: "往 元朗", offset: 0 },
-            { company: "ctb", route: "E33", dir: "outbound", stop: "東涌纜車站", origin_name: "屯門", dest_name: "往 機場/東涌", offset: 0 },
+            { company: "ctb", route: "E33", dir: "outbound", stop: "001854", origin_name: "屯門", dest_name: "往 機場/東涌", offset: 0 },
             { company: "nlb", route: "23", dir: "outbound", stop: "昂坪", origin_name: "東涌", dest_name: "往 昂坪", offset: 0 }
         ];
 
@@ -968,7 +981,6 @@
                 const ctbDir = dir === 'inbound' ? 'inbound' : 'outbound';
                 let stopId = stopIdOrName;
                 
-                // 兼容處理舊資料若是中文名稱
                 if (/[\u4e00-\u9fa5]/.test(stopIdOrName)) {
                     const stopsRes = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/${route.toUpperCase()}/${ctbDir}`);
                     const stopsData = await stopsRes.json();
@@ -1158,7 +1170,7 @@
                     </div>
                 `;
                 container.innerHTML += itemHtml;
-                if (bus.route) loadStopOptions(index, false); // Initialize API data without overriding user text
+                if (bus.route) loadStopOptions(index, false);
             });
         }
 
@@ -1185,13 +1197,11 @@
 
             try {
                 if (company === 'kmb') {
-                    // 1. 自動填寫終點
                     const routeRes = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route/`);
                     const routeData = await routeRes.json();
                     const routeInfo = routeData.data.find(r => r.route === route && r.bound === (dir === 'inbound' ? 'I' : 'O'));
                     if (routeInfo) destName = `往 ${routeInfo.dest_tc}`;
 
-                    // 2. 獲取車站選單
                     const dirCode = dir === 'inbound' ? 'inbound' : 'outbound';
                     let res = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${route}/${dirCode}/1`);
                     if (!res.ok) res = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop`);
@@ -1215,7 +1225,6 @@
                         });
                     }
                 } else if (company === 'ctb') {
-                    // 1. 自動填寫終點
                     const ctbDir = dir === 'inbound' ? 'inbound' : 'outbound';
                     const routeRes = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/route/CTB/${route}`);
                     const routeData = await routeRes.json();
@@ -1223,12 +1232,10 @@
                         destName = `往 ${dir === 'inbound' ? routeData.data.orig_tc : routeData.data.dest_tc}`;
                     }
 
-                    // 2. 獲取車站選單
                     const res = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/${route}/${ctbDir}`);
                     const data = await res.json();
 
-                    if (data.data) {
-                        // 並行獲取所有車站名稱
+                    if (data.data && data.data.length > 0) {
                         const stopPromises = data.data.map(s => fetch(`https://rt.data.gov.hk/v2/transport/citybus/stop/${s.stop}`).then(r => r.json()).catch(() => null));
                         const stopDetails = await Promise.all(stopPromises);
 
@@ -1239,7 +1246,6 @@
                         });
                     }
                 } else if (company === 'nlb') {
-                    // NLB需透過RouteList匹配
                     const routeRes = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list`);
                     const routeData = await routeRes.json();
                     const nlbRoutes = routeData.routes.filter(r => r.routeNo === route);
@@ -1274,16 +1280,13 @@
             
             const currentStop = item.dataset.currentStop;
             if (!isUserAction && currentStop) {
-                // 初次載入，保留原本設定的車站
                 stopSelect.value = currentStop;
             } else if (isUserAction) {
-                // 使用者主動更改路線，清空起點
                 originInput.value = '';
                 item.dataset.currentStop = '';
             }
         }
 
-        // 選擇車站後自動填寫起點
         function handleStopChange(index) {
             const items = document.querySelectorAll('.config-item');
             const item = items[index];
@@ -1295,14 +1298,12 @@
             const selectedOption = stopSelect.options[stopSelect.selectedIndex];
             if (selectedOption && selectedOption.value) {
                 const fullName = selectedOption.text;
-                // 去除序列前綴（如 "1. "）提取純站名
                 const cleanName = fullName.replace(/^\d+\.\s*/, '');
                 originInput.value = cleanName;
             } else {
                 originInput.value = '';
             }
             
-            // 更新狀態
             item.dataset.currentStop = selectedOption.value;
         }
 
