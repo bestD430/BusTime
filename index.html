@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -1080,11 +1081,11 @@
                                 <option value="ctb" ${bus.company === 'ctb' ? 'selected' : ''}>城巴 (CTB)</option>
                                 <option value="nlb" ${bus.company === 'nlb' ? 'selected' : ''}>嶼巴 (NLB)</option>
                             </select>
-                            <select class="config-select bus-dir" onchange="loadStopOptions(${index}, true)">
+                            <input type="text" class="config-input bus-route" placeholder="路線 (例: E36A)" value="${bus.route}" onchange="onBusMetaChanged(${index})">
+                            <select class="config-select bus-dir" onchange="onDirectionChanged(${index})">
                                 <option value="outbound">方向載入中...</option>
                                 <option value="inbound" ${busDir === 'inbound' ? 'selected' : ''}></option>
                             </select>
-                            <input type="text" class="config-input bus-route" placeholder="路線 (例: E36A)" value="${bus.route}" onchange="onBusMetaChanged(${index})">
                             <button class="delete-btn" onclick="deleteBusConfig(${index})">刪除</button>
                         </div>
                         <div class="config-row">
@@ -1107,6 +1108,21 @@
             loadStopOptions(index, true);
         }
 
+        async function onDirectionChanged(index) {
+            const items = document.querySelectorAll('.config-item');
+            const item = items[index];
+            if (!item) return;
+            const dirSelect = item.querySelector('.bus-dir');
+            item.dataset.currentDir = dirSelect.value;
+            // 更新目標目的地名稱並載入該方向的車站
+            const selectedOpt = dirSelect.options[dirSelect.selectedIndex];
+            const destInput = item.querySelector('.bus-dest');
+            if (selectedOpt && selectedOpt.text) {
+                destInput.value = selectedOpt.text;
+            }
+            await loadStopOptions(index, false);
+        }
+
         async function updateDirectionOptions(index, isUserAction = false) {
             const items = document.querySelectorAll('.config-item');
             const item = items[index];
@@ -1116,6 +1132,7 @@
             const route = item.querySelector('.bus-route').value.trim().toUpperCase();
             const dirSelect = item.querySelector('.bus-dir');
             const currentDir = item.dataset.currentDir || 'outbound';
+            const destInput = item.querySelector('.bus-dest');
 
             if (!route) {
                 dirSelect.innerHTML = '<option value="outbound">請先輸入路線...</option>';
@@ -1127,7 +1144,6 @@
 
             try {
                 if (company === 'kmb') {
-                    // 嘗試抓取雙方向的終點站資料
                     let destO = '', destI = '';
                     try {
                         const resO = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route/${route}/outbound/1`);
@@ -1189,12 +1205,15 @@
 
             dirSelect.innerHTML = optionsHtml;
             
-            // 嘗試還原原本選擇的方向，若不符合則預設選第一個
             if (!isUserAction && currentDir) {
                 dirSelect.value = currentDir;
             } else {
                 dirSelect.selectedIndex = 0;
                 item.dataset.currentDir = dirSelect.value;
+            }
+
+            if (isUserAction && dirSelect.options[dirSelect.selectedIndex]) {
+                destInput.value = dirSelect.options[dirSelect.selectedIndex].text;
             }
         }
 
@@ -1203,7 +1222,6 @@
             const item = items[index];
             if (!item) return;
 
-            // 確保方向選單已正確根據路線更新
             if (isUserAction || item.querySelector('.bus-dir').options.length <= 1) {
                 await updateDirectionOptions(index, isUserAction);
             }
@@ -1215,7 +1233,6 @@
             item.dataset.currentDir = dir;
 
             const stopSelect = item.querySelector('.bus-stop');
-            const destInput = item.querySelector('.bus-dest');
             const originInput = item.querySelector('.bus-origin');
 
             if (!route) {
@@ -1225,7 +1242,6 @@
 
             stopSelect.innerHTML = '<option value="">載入車站中...</option>';
             let optionsHtml = '<option value="">請選擇車站...</option>';
-            let destName = dirSelect.options[dirSelect.selectedIndex]?.text || '';
 
             try {
                 if (company === 'kmb') {
@@ -1294,8 +1310,6 @@
                         optionsHtml = '<option value="">找不到該路線或方向</option>';
                     }
                 }
-
-                if (isUserAction && destName) destInput.value = destName;
             } catch (e) {
                 optionsHtml = '<option value="">載入失敗，請檢查網路</option>';
             }
