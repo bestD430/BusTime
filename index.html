@@ -572,7 +572,7 @@
                     📍 <span id="disp-origin">逸東邨</span> ➔ <span id="disp-dest">滿東邨</span>
                 </div>
 
-                <!-- 交通暢順度狀態卡片（已更新為顯示起終點途經路段） -->
+                <!-- 交通暢順度狀態卡片 -->
                 <div class="traffic-status-card" id="traffic-status-card">
                     <div class="traffic-status-title">
                         <span>🚦 途經路段交通情況</span>
@@ -630,7 +630,7 @@
             </div>
             <div class="hint-text">
                 💡 <b>使用說明</b>：<br>
-                1. 輸入「路線」和選擇「行車方向」後，車站選單會<b>自動列出該路線車站</b>，並為您自動填寫「終點」。<br>
+                1. 選擇「行車方向」和輸入「路線」後，車站選單會<b>自動列出該路線車站</b>，並為您自動填寫「終點」。<br>
                 2. 從下拉選單選擇上車車站後，系統會自動為您填寫「起點站名」。
             </div>
             <div class="config-list" id="config-list"></div>
@@ -735,7 +735,6 @@
             }
         }
 
-        // 檢查起點至終點途經路段的交通狀況
         async function checkTrafficStatus() {
             const card = document.getElementById('traffic-status-card');
             const statusText = document.getElementById('status-text');
@@ -747,12 +746,10 @@
                 const origin = trafficConfig.origin;
                 const destination = trafficConfig.destination;
 
-                // 嘗試獲取開放數據路速數據比對途經路段
                 const speedRes = await fetch('https://rt.data.gov.hk/v1/transport/traffic-speed-map');
                 const speedData = await speedRes.json();
                 
                 if (Array.isArray(speedData)) {
-                    // 比對起點與終點名稱關鍵字過濾路段
                     const relevantRoads = speedData.filter(r => {
                         const locationStr = (r.ROAD_SECTION || r.LOCATION || '').toString();
                         return locationStr.includes(origin) || locationStr.includes(destination) || 
@@ -958,6 +955,7 @@
         /* ------------------ 巴士 API 邏輯 ------------------ */
         async function getKMBSeta(route, stopCode, dir) {
             try {
+                if (!stopCode) return [];
                 let targetStopId = stopCode;
                 if (stopCode.length < 10) {
                     const stopRes = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/stop`);
@@ -969,7 +967,7 @@
                 const etaData = await etaRes.json();
                 
                 const kmbDir = dir === 'inbound' ? 'I' : 'O';
-                return etaData.data.filter(i => 
+                return (etaData.data || []).filter(i => 
                     i.route.toUpperCase() === route.toUpperCase() && 
                     (!i.dir || i.dir === kmbDir)
                 );
@@ -978,6 +976,7 @@
 
         async function getCTBETA(route, stopIdOrName, dir) {
             try {
+                if (!stopIdOrName) return [];
                 const ctbDir = dir === 'inbound' ? 'inbound' : 'outbound';
                 let stopId = stopIdOrName;
                 
@@ -1009,6 +1008,7 @@
 
         async function getNLBETA(route, stopName, dir) {
             try {
+                if (!stopName) return [];
                 const res = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list`);
                 const data = await res.json();
                 const matchedStop = data.stops.find(s => s.stopName_c.includes(stopName));
@@ -1032,22 +1032,24 @@
             const companyOrder = { kmb: 1, ctb: 2, nlb: 3 };
             const sortedBuses = [...currentBuses].sort((a, b) => (companyOrder[a.company] || 99) - (companyOrder[b.company] || 99));
 
-            let newHtml = '';
             const now = new Date();
 
-            for (let bus of sortedBuses) {
+            // 改為並行請求 API，防止路線互相卡死
+            const busResults = await Promise.all(sortedBuses.map(async (bus) => {
                 const busDir = bus.dir || 'outbound';
                 const busOffset = parseFloat(bus.offset || 0);
                 const busKey = `${bus.company}_${bus.route}_${busDir}_${bus.stop}`;
                 let rawEtas = [];
 
-                if (bus.company === 'kmb') {
-                    rawEtas = await getKMBSeta(bus.route, bus.stop, busDir);
-                } else if (bus.company === 'ctb') {
-                    rawEtas = await getCTBETA(bus.route, bus.stop, busDir);
-                } else if (bus.company === 'nlb') {
-                    rawEtas = await getNLBETA(bus.route, bus.stop, busDir);
-                }
+                try {
+                    if (bus.company === 'kmb') {
+                        rawEtas = await getKMBSeta(bus.route, bus.stop, busDir);
+                    } else if (bus.company === 'ctb') {
+                        rawEtas = await getCTBETA(bus.route, bus.stop, busDir);
+                    } else if (bus.company === 'nlb') {
+                        rawEtas = await getNLBETA(bus.route, bus.stop, busDir);
+                    }
+                } catch(e) {}
 
                 if (rawEtas && rawEtas.length > 0) {
                     cachedRawEtas[busKey] = rawEtas;
@@ -1089,7 +1091,7 @@
                     routeDirectionHtml = originText || destText;
                 }
 
-                newHtml += `
+                return `
                     <div class="bus-item ${itemClass}">
                         <div class="bus-header">
                             <div class="bus-title-group">
@@ -1105,8 +1107,9 @@
                         </div>
                     </div>
                 `;
-            }
-            busListContainer.innerHTML = newHtml;
+            }));
+
+            busListContainer.innerHTML = busResults.join('');
         }
 
         fetchBusData();
@@ -1150,16 +1153,16 @@
                                 <option value="ctb" ${bus.company === 'ctb' ? 'selected' : ''}>城巴 (CTB)</option>
                                 <option value="nlb" ${bus.company === 'nlb' ? 'selected' : ''}>嶼巴 (NLB)</option>
                             </select>
-                            <input type="text" class="config-input bus-route" placeholder="路線 (例: E36A)" value="${bus.route}" onchange="loadStopOptions(${index}, true)">
                             <select class="config-select bus-dir" onchange="loadStopOptions(${index}, true)">
-                                <option value="outbound" ${busDir === 'outbound' ? 'selected' : ''}>去程 (Outbound)</option>
-                                <option value="inbound" ${busDir === 'inbound' ? 'selected' : ''}>返程 (Inbound)</option>
+                                <option value="outbound" ${busDir === 'outbound' ? 'selected' : ''}>往區內</option>
+                                <option value="inbound" ${busDir === 'inbound' ? 'selected' : ''}>往區外</option>
                             </select>
+                            <input type="text" class="config-input bus-route" placeholder="路線 (例: E36A)" value="${bus.route}" onchange="loadStopOptions(${index}, true)">
                             <button class="delete-btn" onclick="deleteBusConfig(${index})">刪除</button>
                         </div>
                         <div class="config-row">
                             <select class="config-select bus-stop" onchange="handleStopChange(${index})">
-                                <option value="${bus.stop}" selected>${bus.stop ? '已選代碼: ' + bus.stop : '請先輸入路線...'}</option>
+                                <option value="${bus.stop}" selected>${bus.stop ? '已選代碼: ' + bus.stop : '請選擇車站...'}</option>
                             </select>
                             <input type="text" class="config-input bus-origin" placeholder="起點站名 (如 東涌)" value="${bus.origin_name || ''}">
                             <input type="text" class="config-input bus-dest" placeholder="目的地 (如 往 元朗)" value="${bus.dest_name || ''}">
@@ -1330,8 +1333,9 @@
                 const dest_name = item.querySelector('.bus-dest').value.trim();
                 const offset = parseFloat(item.querySelector('.bus-offset').value);
 
-                if (route && stop) {
-                    newConfigs.push({ company, route, dir, stop, origin_name, dest_name, offset });
+                // 放寬保存條件：只要有填路線名稱即保存，即使車站還在載入中也不會被直接丟棄
+                if (route) {
+                    newConfigs.push({ company, route, dir, stop: stop || '', origin_name, dest_name, offset });
                 }
             });
 
