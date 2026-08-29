@@ -1139,7 +1139,6 @@
                 const busDir = bus.dir || 'outbound';
                 const busOffset = bus.offset !== undefined ? bus.offset : 0;
 
-                /* 調整位置：行車方向下拉選單與路線號輸入框互調，並修改選項名稱 */
                 const itemHtml = `
                     <div class="config-item" data-index="${index}" data-current-stop="${bus.stop}">
                         <div class="config-row">
@@ -1149,7 +1148,7 @@
                                 <option value="nlb" ${bus.company === 'nlb' ? 'selected' : ''}>嶼巴 (NLB)</option>
                             </select>
                             <select class="config-select bus-dir" onchange="loadStopOptions(${index}, true)">
-                                <option value="outbound" ${busDir === 'outbound' ? 'selected' : ''}>去程 (Outbound)</option>
+                                <option value="outbound" ${busDir === 'outbound' ? 'selected' : ''}>往區內</option>
                                 <option value="inbound" ${busDir === 'inbound' ? 'selected' : ''}>往區外</option>
                             </select>
                             <input type="text" class="config-input bus-route" placeholder="路線 (例: E36A)" value="${bus.route}" onchange="loadStopOptions(${index}, true)">
