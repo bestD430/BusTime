@@ -32,27 +32,50 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        #clock {
+            font-size: 3.5rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #38bdf8;
+            line-height: 1;
+        }
+        #date {
+            font-size: 1.05rem;
+            color: #94a3b8;
+            margin-top: 2px;
+            text-align: center;
+        }
+
+        /* 日期下方的天氣整合區域 */
+        .weather-sub-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             gap: 12px;
+            margin-top: 6px;
+            flex-wrap: wrap;
         }
 
         .weather-info-box {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             background: #1e293b;
-            padding: 4px 10px;
-            border-radius: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
             border: 1px solid #334155;
         }
 
         .weather-icon {
-            width: 32px;
-            height: 32px;
+            width: 26px;
+            height: 26px;
             object-fit: contain;
         }
 
         .weather-temp {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
             color: #38bdf8;
         }
@@ -62,15 +85,14 @@
             align-items: center;
             gap: 6px;
             flex-wrap: wrap;
-            justify-content: center;
         }
 
         .warning-badge {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 4px 8px;
-            border-radius: 8px;
+            padding: 3px 10px;
+            border-radius: 20px;
             font-size: 0.85rem;
             font-weight: bold;
             color: #ffffff;
@@ -85,26 +107,12 @@
         .badge-tc { background: #ea580c; color: #fff; }
         .badge-ts { background: #7c3aed; color: #fff; }
 
-        #clock {
-            font-size: 3.2rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            color: #38bdf8;
-            line-height: 1;
-        }
-        #date {
-            font-size: 1.05rem;
-            color: #94a3b8;
-            margin-top: 4px;
-            text-align: center;
-        }
-
         main {
             display: flex;
             flex: 1;
             flex-direction: column;
             gap: 16px;
-            height: calc(100% - 110px);
+            height: calc(100% - 130px);
             overflow: hidden;
         }
 
@@ -296,6 +304,12 @@
 
     <header>
         <div class="clock-container">
+            <div id="clock">00:00:00</div>
+        </div>
+        <div id="date">--年--月--日 星期-</div>
+        
+        <!-- 天氣資訊放於日期下方 -->
+        <div class="weather-sub-bar">
             <div class="weather-info-box" id="weather-info-box" style="display: none;">
                 <img id="weather-icon" class="weather-icon" src="" alt="weather icon" />
                 <span id="weather-temp" class="weather-temp">--°C</span>
@@ -303,11 +317,7 @@
             <div class="weather-warnings" id="weather-warnings">
                 <span class="warning-badge badge-none">☀️ 天氣良好</span>
             </div>
-            <div>
-                <div id="clock">00:00:00</div>
-            </div>
         </div>
-        <div id="date">--年--月--日 星期-</div>
     </header>
 
     <main>
@@ -328,7 +338,7 @@
                 <button class="modal-close" onclick="closeSettings()">&times;</button>
             </div>
             <div class="hint-text">
-                💡 已新增實時天氣圖示及氣溫顯示。
+                💡 天氣資訊已調整至日期下方顯示。
             </div>
             <div class="config-list" id="config-list"></div>
             <div class="modal-footer">
@@ -392,7 +402,6 @@
                         weatherBox.style.display = 'flex';
                     }
                     if (rhrData.temperature && rhrData.temperature.data && rhrData.temperature.data.length > 0) {
-                        // 優先尋找天文台總部或第一個測量點氣溫
                         const hkoTemp = rhrData.temperature.data.find(t => t.place === "香港天文台") || rhrData.temperature.data[0];
                         weatherTemp.innerText = `${hkoTemp.value}°C`;
                     }
