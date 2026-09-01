@@ -17,7 +17,6 @@
             overflow: hidden;
         }
 
-        /* 頂部區域 */
         header {
             display: flex;
             flex-direction: column;
@@ -25,7 +24,7 @@
             padding-bottom: 10px;
             border-bottom: 1px solid #334155;
             margin-bottom: 12px;
-            gap: 8px;
+            gap: 6px;
             flex-shrink: 0;
         }
 
@@ -33,30 +32,61 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 16px;
+            gap: 12px;
+        }
+
+        .weather-info-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #1e293b;
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+        }
+
+        .weather-icon {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+
+        .weather-temp {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #38bdf8;
         }
 
         .weather-warnings {
             display: flex;
             align-items: center;
             gap: 6px;
-            min-height: 48px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
-        .warning-icon {
-            height: 42px;
-            width: auto;
-            object-fit: contain;
-            border-radius: 4px;
-        }
-
-        .no-warning {
+        .warning-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 8px;
+            border-radius: 8px;
             font-size: 0.85rem;
-            color: #64748b;
+            font-weight: bold;
+            color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            white-space: nowrap;
         }
+
+        .badge-none { background: #334155; color: #94a3b8; }
+        .badge-yellow-rain { background: #eab308; color: #000; }
+        .badge-red-rain { background: #dc2626; color: #fff; }
+        .badge-black-rain { background: #000000; color: #fff; border: 1px solid #475569; }
+        .badge-tc { background: #ea580c; color: #fff; }
+        .badge-ts { background: #7c3aed; color: #fff; }
 
         #clock {
-            font-size: 3.5rem;
+            font-size: 3.2rem;
             font-weight: 700;
             letter-spacing: 2px;
             color: #38bdf8;
@@ -110,7 +140,6 @@
 
         .bus-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1; padding-right: 4px; }
         .bus-item {
-            background: #334155;
             border-radius: 12px;
             padding: 12px;
             display: flex;
@@ -119,26 +148,28 @@
             width: 100%;
         }
         
-        .bus-item.item-kmb { background: #b91c1c; color: #ffffff; }
+        .bus-item.item-kmb { background: #cc1c1c; color: #ffffff; }
+        .bus-item.item-lwb { background: #ea580c; color: #ffffff; }
         .bus-item.item-ctb { background: #eab308; color: #000000; }
-        .bus-item.item-nlb { background: #15803d; color: #ffffff; }
+        .bus-item.item-nlb { background: #16a34a; color: #ffffff; }
 
         .bus-header { display: flex; justify-content: space-between; align-items: baseline; }
         .bus-title-group { display: flex; align-items: center; gap: 8px; }
+        
         .bus-company-tag {
             font-size: 0.75rem;
             padding: 2px 6px;
             border-radius: 4px;
             font-weight: bold;
         }
-        .tag-kmb { background: #7f1d1d; color: #ffffff; }
-        .tag-ctb { background: #713f12; color: #ffffff; }
-        .tag-nlb { background: #166534; color: #bbf7d0; }
+        .tag-kmb { background: rgba(0, 0, 0, 0.25); color: #ffffff; }
+        .tag-lwb { background: rgba(0, 0, 0, 0.25); color: #ffffff; }
+        .tag-ctb { background: rgba(0, 0, 0, 0.15); color: #000000; }
+        .tag-nlb { background: rgba(0, 0, 0, 0.25); color: #ffffff; }
 
         .bus-name { font-size: 3.5rem; font-weight: 700; letter-spacing: 2px; line-height: 1; }
-        .item-kmb .bus-name { color: #ffffff; }
+        .item-kmb .bus-name, .item-lwb .bus-name, .item-nlb .bus-name { color: #ffffff; }
         .item-ctb .bus-name { color: #000000; }
-        .item-nlb .bus-name { color: #ffffff; }
 
         .bus-dest { 
             font-size: 0.85rem; 
@@ -152,9 +183,8 @@
         .bus-origin-text { font-size: 1.15rem; font-weight: 800; }
         .bus-dest-text { font-size: 0.85rem; font-weight: 500; opacity: 0.9; }
 
-        .item-kmb .bus-dest { color: #fecdd3; }
-        .item-ctb .bus-dest { color: #1e293b; }
-        .item-nlb .bus-dest { color: #dcfce7; }
+        .item-kmb .bus-dest, .item-lwb .bus-dest, .item-nlb .bus-dest { color: #ffffff; }
+        .item-ctb .bus-dest { color: #000000; }
 
         .eta-group { display: flex; gap: 8px; align-items: center; }
         .eta-badge {
@@ -187,7 +217,6 @@
 
         .loading-text { text-align: center; color: #94a3b8; padding: 20px; font-size: 0.9rem; }
 
-        /* Modal 樣式 */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -267,8 +296,12 @@
 
     <header>
         <div class="clock-container">
+            <div class="weather-info-box" id="weather-info-box" style="display: none;">
+                <img id="weather-icon" class="weather-icon" src="" alt="weather icon" />
+                <span id="weather-temp" class="weather-temp">--°C</span>
+            </div>
             <div class="weather-warnings" id="weather-warnings">
-                <!-- 天文台警告 Icon 將自動載入於此 -->
+                <span class="warning-badge badge-none">☀️ 天氣良好</span>
             </div>
             <div>
                 <div id="clock">00:00:00</div>
@@ -295,9 +328,7 @@
                 <button class="modal-close" onclick="closeSettings()">&times;</button>
             </div>
             <div class="hint-text">
-                💡 <b>使用說明</b>：<br>
-                1. 輸入「路線」後，「行車方向」選單將自動載入該路線的實際終點站名稱供您選擇。<br>
-                2. 選擇方向與上車車站後，系統會自動填寫起點與終點名稱。
+                💡 已新增實時天氣圖示及氣溫顯示。
             </div>
             <div class="config-list" id="config-list"></div>
             <div class="modal-footer">
@@ -310,6 +341,7 @@
     <script>
         let kmbStopsCacheMap = null;
         const ctbStopsCache = {};
+        let nlbRoutesCache = null;
 
         async function getKmbStopsMap() {
             if (kmbStopsCacheMap) return kmbStopsCacheMap;
@@ -323,6 +355,18 @@
             }
         }
 
+        async function getNlbRoutes() {
+            if (nlbRoutesCache) return nlbRoutesCache;
+            try {
+                const res = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list`);
+                const data = await res.json();
+                nlbRoutesCache = data.routes || [];
+                return nlbRoutesCache;
+            } catch (e) {
+                return [];
+            }
+        }
+
         function updateClock() {
             const now = new Date();
             document.getElementById('clock').innerText = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
@@ -332,77 +376,88 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        /* ------------------ 天文台警告 API ------------------ */
-        async function fetchWeatherWarnings() {
+        async function fetchWeatherData() {
             const container = document.getElementById('weather-warnings');
+            const weatherBox = document.getElementById('weather-info-box');
+            const weatherIcon = document.getElementById('weather-icon');
+            const weatherTemp = document.getElementById('weather-temp');
+
             try {
+                // 1. 抓取氣溫及天氣 Icon 資料 (rhrread API)
+                const rhrRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc');
+                if (rhrRes.ok) {
+                    const rhrData = await rhrRes.json();
+                    if (rhrData.icon && rhrData.icon.length > 0) {
+                        weatherIcon.src = `https://www.hko.gov.hk/images/HKO_flk/pic${rhrData.icon[0]}.png`;
+                        weatherBox.style.display = 'flex';
+                    }
+                    if (rhrData.temperature && rhrData.temperature.data && rhrData.temperature.data.length > 0) {
+                        // 優先尋找天文台總部或第一個測量點氣溫
+                        const hkoTemp = rhrData.temperature.data.find(t => t.place === "香港天文台") || rhrData.temperature.data[0];
+                        weatherTemp.innerText = `${hkoTemp.value}°C`;
+                    }
+                }
+
+                // 2. 抓取警告信號摘要 (warnsum API)
                 const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc');
                 if (!res.ok) return;
                 const data = await res.json();
                 
-                let iconsHtml = '';
-                // data 格式通常為物件，key 是警告代碼 (如 WRAIN, TC1 等)
+                let badges = [];
+
                 for (const key in data) {
                     if (data.hasOwnProperty(key)) {
-                        const warning = data[key];
-                        // 取得香港天文台官方提供的警告標誌圖片或代碼對應
-                        if (warning.code && warning.actionCode) {
-                            // 天文台官方圖標一般可透過代碼組合，或直接使用官方提供的 icon 網址（若 API 內含或標準路徑）
-                            // 這裡透過香港天文台公開警告圖標規則組合
+                        const item = data[key];
+                        if (item && item.actionCode !== "CANCEL") {
+                            if (key === "WRAINA") badges.push('<span class="warning-badge badge-yellow-rain">🌧️ 黃雨</span>');
+                            else if (key === "WRAINR") badges.push('<span class="warning-badge badge-red-rain">🌧️ 紅雨</span>');
+                            else if (key === "WRAINB") badges.push('<span class="warning-badge badge-black-rain">🌧️ 黑雨</span>');
+                            else if (key.startsWith("WTCSGN")) {
+                                const code = key.replace("WTCSGN", "");
+                                let tcText = "";
+                                if (code === "L") tcText = "1號戒備";
+                                else if (code === "M") tcText = "3號強風";
+                                else if (code === "8NE") tcText = "8號東北";
+                                else if (code === "8SE") tcText = "8號東南";
+                                else if (code === "8NW") tcText = "8號西北";
+                                else if (code === "8SW") tcText = "8號西南";
+                                else if (code === "9") tcText = "9號烈風";
+                                else if (code === "10") tcText = "10號颶風";
+                                else tcText = `${code}號風球`;
+
+                                badges.push(`<span class="warning-badge badge-tc">🌀 ${tcText}</span>`);
+                            } else if (key === "WTS") {
+                                badges.push('<span class="warning-badge badge-ts">⛈️ 雷暴</span>');
+                            } else if (key === "SMS") {
+                                badges.push('<span class="warning-badge badge-tc">💨 強烈季候風</span>');
+                            }
                         }
                     }
                 }
 
-                // 為了確保穩定抓取香港天文台現正生效的警告資訊，改用本地天氣警告狀態 API
-                const infoRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrh&lang=tc');
-                // 同時也常使用 warnInfo API
-                const warnRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warningInfo&lang=tc');
-                if (warnRes.ok) {
-                    const warnData = await warnRes.json();
-                    let activeIcons = [];
-                    // 檢查 warnInfo 中的有效警告
-                    for (const code in warnData) {
-                        const warnDetails = warnData[code];
-                        if (warnDetails && warnDetails.details && warnDetails.details.length > 0) {
-                            warnDetails.details.forEach(item => {
-                                if (item.warningCode) {
-                                    // 對應香港天文台警告圖標檔名規則，例如 rain_red, rain_black, tc1, tc3, tc8se 等
-                                    activeIcons.push(item.warningCode.toLowerCase());
-                                }
-                            });
-                        }
-                    }
-
-                    if (activeIcons.length > 0) {
-                        iconsHtml = activeIcons.map(code => `<img class="warning-icon" src="https://www.hko.gov.hk/images/HKOWarningIcons/${code}.png" alt="${code}" onerror="this.style.display='none'">`).join('');
-                    }
-                }
-
-                if (!iconsHtml) {
-                    // 若無任何警告，保持空白或不顯示
-                    container.innerHTML = '';
+                if (badges.length > 0) {
+                    container.innerHTML = badges.join('');
                 } else {
-                    container.innerHTML = iconsHtml;
+                    container.innerHTML = '<span class="warning-badge badge-none">☀️ 天氣良好</span>';
                 }
             } catch (e) {
-                // 網路或API異常時不影響主畫面
-                container.innerHTML = '';
+                container.innerHTML = '<span class="warning-badge badge-none">☀️ 天氣良好</span>';
             }
         }
-        fetchWeatherWarnings();
-        setInterval(fetchWeatherWarnings, 60000); // 每分鐘檢查一次天氣警告
+        fetchWeatherData();
+        setInterval(fetchWeatherData, 60000);
 
         const defaultBuses = [
-            { company: "kmb", route: "E36A", dir: "inbound", stop: "TC188", origin_name: "東涌", dest_name: "往 元朗", offset: 0 },
+            { company: "lwb", route: "E36A", dir: "inbound", stop: "TC188", origin_name: "東涌", dest_name: "往 元朗", offset: 0 },
             { company: "ctb", route: "E33", dir: "outbound", stop: "001854", origin_name: "屯門", dest_name: "往 機場/東涌", offset: 0 },
-            { company: "nlb", route: "23", dir: "outbound", stop: "昂坪", origin_name: "東涌", dest_name: "往 昂坪", offset: 0 }
+            { company: "nlb", route: "23", dir: "1", stop: "東涌達東路巴士總站", origin_name: "東涌", dest_name: "往 昂坪", offset: 0 }
         ];
 
         let currentBuses = [];
         let cachedRawEtas = {};
 
         function loadBusConfigs() {
-            const saved = localStorage.getItem('user_bus_configs_v7');
+            const saved = localStorage.getItem('user_bus_configs_v10');
             if (saved) {
                 try { currentBuses = JSON.parse(saved); } catch(e) { currentBuses = defaultBuses; }
             } else {
@@ -410,7 +465,6 @@
             }
         }
 
-        /* ------------------ 巴士 API 邏輯 ------------------ */
         async function getKMBSeta(route, stopCode, dir) {
             try {
                 if (!stopCode) return [];
@@ -438,15 +492,26 @@
             } catch (e) { return []; }
         }
 
-        async function getNLBETA(route, stopName, dir) {
+        async function getNLBETA(route, stopIdOrName, dir) {
             try {
-                if (!stopName) return [];
-                const res = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list`);
-                const data = await res.json();
-                const matchedStop = data.stops.find(s => s.stopName_c.includes(stopName));
-                if (!matchedStop) return [];
+                if (!stopIdOrName) return [];
+                let stopId = stopIdOrName;
+                
+                const allRoutes = await getNlbRoutes();
+                const matchedRoute = allRoutes.find(r => r.routeNo.toUpperCase() === route.toUpperCase() && (dir ? r.routeId == dir : true)) || allRoutes.find(r => r.routeNo.toUpperCase() === route.toUpperCase());
+                
+                if (!matchedRoute) return [];
 
-                const etaRes = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=estimatedArrivals&stopId=${matchedStop.stopId}&routeId=${route}`);
+                if (isNaN(stopId)) {
+                    const stopsRes = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${matchedRoute.routeId}`);
+                    const stopsData = await stopsRes.json();
+                    const matchedStop = (stopsData.stops || []).find(s => s.stopName_c.includes(stopIdOrName) || stopIdOrName.includes(s.stopName_c));
+                    if (matchedStop) stopId = matchedStop.stopId;
+                }
+
+                if (!stopId || isNaN(stopId)) return [];
+
+                const etaRes = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=estimatedArrivals&stopId=${stopId}&routeId=${matchedRoute.routeId}`);
                 const etaData = await etaRes.json();
                 return (etaData.estimatedArrivals || []).map(i => ({ eta: i.estimatedArrivalAt }));
             } catch (e) { return []; }
@@ -461,7 +526,7 @@
                 return;
             }
 
-            const companyOrder = { kmb: 1, ctb: 2, nlb: 3 };
+            const companyOrder = { kmb: 1, lwb: 2, ctb: 3, nlb: 4 };
             const sortedBuses = [...currentBuses].sort((a, b) => (companyOrder[a.company] || 99) - (companyOrder[b.company] || 99));
             const now = new Date();
 
@@ -472,7 +537,7 @@
                 let rawEtas = [];
 
                 try {
-                    if (bus.company === 'kmb') rawEtas = await getKMBSeta(bus.route, bus.stop, busDir);
+                    if (bus.company === 'kmb' || bus.company === 'lwb') rawEtas = await getKMBSeta(bus.route, bus.stop, busDir);
                     else if (bus.company === 'ctb') rawEtas = await getCTBETA(bus.route, bus.stop, busDir);
                     else if (bus.company === 'nlb') rawEtas = await getNLBETA(bus.route, bus.stop, busDir);
                 } catch(e) {}
@@ -483,7 +548,7 @@
                 let etas = (rawEtas || []).map(item => {
                     if (!item || !item.eta) return null;
                     let totalDiffSeconds = Math.round((new Date(item.eta) - now) / 1000) + (busOffset * 60);
-                    if (bus.company === 'kmb') totalDiffSeconds -= 60;
+                    if (bus.company === 'kmb' || bus.company === 'lwb') totalDiffSeconds -= 60;
                     if (totalDiffSeconds < 0) return null;
                     if (totalDiffSeconds <= 90) return '即將到站';
                     return `${Math.round(totalDiffSeconds / 60)} 分鐘`;
@@ -492,10 +557,14 @@
                 while (etas.length < 3) etas.push('-');
 
                 const isArr = etas[0] === '即將到站';
-                const companyTag = bus.company === 'kmb' ? '<span class="bus-company-tag tag-kmb">九巴/龍運</span>' : 
+                const companyTag = bus.company === 'kmb' ? '<span class="bus-company-tag tag-kmb">九巴</span>' : 
+                                   bus.company === 'lwb' ? '<span class="bus-company-tag tag-lwb">龍運</span>' : 
                                    bus.company === 'ctb' ? '<span class="bus-company-tag tag-ctb">城巴</span>' : 
                                    '<span class="bus-company-tag tag-nlb">嶼巴</span>';
-                const itemClass = bus.company === 'kmb' ? 'item-kmb' : bus.company === 'ctb' ? 'item-ctb' : 'item-nlb';
+                
+                const itemClass = bus.company === 'kmb' ? 'item-kmb' : 
+                                  bus.company === 'lwb' ? 'item-lwb' : 
+                                  bus.company === 'ctb' ? 'item-ctb' : 'item-nlb';
                 
                 const originText = bus.origin_name ? `<span class="bus-origin-text">${bus.origin_name}</span>` : '';
                 const destText = bus.dest_name ? `<span class="bus-dest-text">${bus.dest_name}</span>` : '';
@@ -522,7 +591,6 @@
         fetchBusData();
         setInterval(fetchBusData, 30000);
 
-        /* ------------------ 彈出式車站位置選單及自動填寫邏輯 ------------------ */
         function openSettings() {
             loadBusConfigs();
             renderSettingsList();
@@ -554,11 +622,12 @@
                     <div class="config-item" data-index="${index}" data-current-stop="${bus.stop}" data-current-dir="${busDir}">
                         <div class="config-row">
                             <select class="config-select bus-company" onchange="onBusMetaChanged(${index})">
-                                <option value="kmb" ${bus.company === 'kmb' ? 'selected' : ''}>九巴/龍運 (KMB)</option>
+                                <option value="kmb" ${bus.company === 'kmb' ? 'selected' : ''}>九巴 (KMB)</option>
+                                <option value="lwb" ${bus.company === 'lwb' ? 'selected' : ''}>龍運 (LWB)</option>
                                 <option value="ctb" ${bus.company === 'ctb' ? 'selected' : ''}>城巴 (CTB)</option>
                                 <option value="nlb" ${bus.company === 'nlb' ? 'selected' : ''}>嶼巴 (NLB)</option>
                             </select>
-                            <input type="text" class="config-input bus-route" placeholder="路線 (例: E36A)" value="${bus.route}" onchange="onBusMetaChanged(${index})">
+                            <input type="text" class="config-input bus-route" placeholder="路線 (例: 23)" value="${bus.route}" onchange="onBusMetaChanged(${index})">
                             <select class="config-select bus-dir" onchange="onDirectionChanged(${index})">
                                 <option value="${busDir}" selected>方向載入中...</option>
                             </select>
@@ -566,10 +635,10 @@
                         </div>
                         <div class="config-row">
                             <select class="config-select bus-stop" onchange="handleStopChange(${index})">
-                                <option value="${bus.stop}" selected>${bus.stop ? '已選代碼: ' + bus.stop : '請選擇車站...'}</option>
+                                <option value="${bus.stop}" selected>${bus.stop ? '已選: ' + bus.stop : '請選擇車站...'}</option>
                             </select>
                             <input type="text" class="config-input bus-origin" placeholder="起點站名 (如 東涌)" value="${bus.origin_name || ''}">
-                            <input type="text" class="config-input bus-dest" placeholder="目的地 (如 往 元朗)" value="${bus.dest_name || ''}">
+                            <input type="text" class="config-input bus-dest" placeholder="目的地 (如 往 昂坪)" value="${bus.dest_name || ''}">
                             <select class="config-select bus-offset" title="時間微調">${generateOffsetOptions(busOffset)}</select>
                         </div>
                     </div>
@@ -618,7 +687,7 @@
             let optionsHtml = '';
 
             try {
-                if (company === 'kmb') {
+                if (company === 'kmb' || company === 'lwb') {
                     let destO = '', destI = '';
                     try {
                         const resO = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route/${route}/outbound/1`);
@@ -630,11 +699,7 @@
                     } catch(e) {}
 
                     optionsHtml += `<option value="outbound">往 ${destO || '(去程終點)'}</option>`;
-                    if (destI) {
-                        optionsHtml += `<option value="inbound">往 ${destI}</option>`;
-                    } else {
-                        optionsHtml += `<option value="inbound">往 (回程終點)</option>`;
-                    }
+                    optionsHtml += `<option value="inbound">往 ${destI || '(回程終點)'}</option>`;
 
                 } else if (company === 'ctb') {
                     try {
@@ -655,22 +720,16 @@
                     }
 
                 } else if (company === 'nlb') {
-                    try {
-                        const res = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list`);
-                        const data = await res.json();
-                        const nlbRoutes = data.routes.filter(r => r.routeNo === route);
-                        
-                        if (nlbRoutes.length > 0) {
-                            nlbRoutes.forEach((rInfo, idx) => {
-                                const valCode = idx === 0 ? 'outbound' : 'inbound';
-                                const locs = rInfo.routeName_c.split('>');
-                                const terminal = locs.length >= 2 ? locs[locs.length - 1].trim() : rInfo.routeName_c;
-                                optionsHtml += `<option value="${valCode}">往 ${terminal}</option>`;
-                            });
-                        }
-                    } catch(e) {}
-
-                    if (!optionsHtml) {
+                    const allRoutes = await getNlbRoutes();
+                    const nlbRoutes = allRoutes.filter(r => r.routeNo.toUpperCase() === route);
+                    
+                    if (nlbRoutes.length > 0) {
+                        nlbRoutes.forEach((rInfo) => {
+                            const locs = rInfo.routeName_c.split('>');
+                            const terminal = locs.length >= 2 ? locs[locs.length - 1].trim() : rInfo.routeName_c;
+                            optionsHtml += `<option value="${rInfo.routeId}">往 ${terminal}</option>`;
+                        });
+                    } else {
                         optionsHtml = `<option value="outbound">往 目的地</option>`;
                     }
                 }
@@ -720,7 +779,7 @@
             let optionsHtml = '<option value="">請選擇車站...</option>';
 
             try {
-                if (company === 'kmb') {
+                if (company === 'kmb' || company === 'lwb') {
                     const dirCode = dir === 'inbound' ? 'inbound' : 'outbound';
                     
                     let res = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${route}/${dirCode}/1`);
@@ -769,21 +828,21 @@
                         optionsHtml = '<option value="">找不到該路線或方向</option>';
                     }
                 } else if (company === 'nlb') {
-                    const routeRes = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list`);
-                    const routeData = await routeRes.json();
-                    const nlbRoutes = routeData.routes.filter(r => r.routeNo === route);
+                    const allRoutes = await getNlbRoutes();
+                    const matchedRoute = allRoutes.find(r => r.routeNo.toUpperCase() === route && (dir ? r.routeId == dir : true)) || allRoutes.find(r => r.routeNo.toUpperCase() === route);
                     
-                    const routeInfo = (dir === 'inbound' && nlbRoutes.length > 1) ? nlbRoutes[1] : nlbRoutes[0];
-                    if (routeInfo) {
-                        const res = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${routeInfo.routeId}`);
+                    if (matchedRoute) {
+                        const res = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${matchedRoute.routeId}`);
                         const data = await res.json();
-                        if (data.stops) {
+                        if (data.stops && data.stops.length > 0) {
                             data.stops.forEach((s, idx) => {
-                                optionsHtml += `<option value="${s.stopName_c}">${idx + 1}. ${s.stopName_c}</option>`;
+                                optionsHtml += `<option value="${s.stopId}">${idx + 1}. ${s.stopName_c}</option>`;
                             });
+                        } else {
+                            optionsHtml = '<option value="">找不到車站資料</option>';
                         }
                     } else {
-                        optionsHtml = '<option value="">找不到該路線或方向</option>';
+                        optionsHtml = '<option value="">找不到該路線</option>';
                     }
                 }
             } catch (e) {
@@ -862,7 +921,7 @@
             });
 
             currentBuses = newConfigs;
-            localStorage.setItem('user_bus_configs_v7', JSON.stringify(currentBuses));
+            localStorage.setItem('user_bus_configs_v10', JSON.stringify(currentBuses));
             closeSettings();
             fetchBusData();
         }
