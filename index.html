@@ -594,7 +594,6 @@
             } catch (e) { return []; }
         }
 
-        /* 修正後的 嶼巴 NLB 到站時間抓取函數 */
         async function getNLBETA(route, stopIdOrName, dir) {
             try {
                 if (!stopIdOrName) return [];
@@ -605,7 +604,6 @@
                 
                 if (!matchedRoute) return [];
 
-                // 若傳入字串包含中文，搜尋匹配的站號 ID
                 if (isNaN(stopId)) {
                     const stopsRes = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${matchedRoute.routeId}`);
                     const stopsData = await stopsRes.json();
@@ -618,7 +616,6 @@
                 const etaRes = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=estimatedArrivals&stopId=${stopId}&routeId=${matchedRoute.routeId}`);
                 const etaData = await etaRes.json();
 
-                // 核心修復：解析 estimatedArrivalTimestamp 欄位
                 return (etaData.estimatedArrivals || []).map(i => ({ 
                     eta: i.estimatedArrivalTimestamp || i.estimatedArrivalAt 
                 }));
