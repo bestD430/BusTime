@@ -48,7 +48,6 @@
             text-align: center;
         }
 
-        /* 日期下方的天氣整合區域 */
         .weather-sub-bar {
             display: flex;
             align-items: center;
@@ -112,9 +111,8 @@
         .badge-tc { background: #ea580c; color: #fff; }
         .badge-ts { background: #7c3aed; color: #fff; }
 
-        /* 政府新聞停課消息通告欄（夾在時鐘欄與巴士欄之間） */
         .school-notice {
-            display: none; /* 預設隱藏，有停課新聞時自動顯示 */
+            display: none;
             background: #dc2626;
             color: #ffffff;
             padding: 10px 14px;
@@ -335,7 +333,6 @@
         </div>
         <div id="date">--年--月--日 星期-</div>
         
-        <!-- 天氣資訊（本地圖片 + Fallback 備用 Emoji） -->
         <div class="weather-sub-bar">
             <div class="weather-info-box" id="weather-info-box" style="display: none;">
                 <img id="weather-icon" class="weather-icon" src="" alt="weather icon" />
@@ -348,7 +345,6 @@
         </div>
     </header>
 
-    <!-- 政府新聞處停課消息通告欄（夾在時鐘欄與巴士欄之間） -->
     <div id="school-closure-notice" class="school-notice"></div>
 
     <main>
@@ -361,7 +357,6 @@
         </section>
     </main>
 
-    <!-- 巴士設定 Modal -->
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -425,7 +420,6 @@
             const weatherTemp = document.getElementById('weather-temp');
 
             try {
-                // 1. 抓取氣溫及天氣 Icon 編號 (rhrread API)
                 const rhrRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc');
                 if (rhrRes.ok) {
                     const rhrData = await rhrRes.json();
@@ -449,7 +443,6 @@
                     }
                 }
 
-                // 2. 抓取警告信號摘要 (warnsum API)
                 const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc');
                 if (res.ok) {
                     const data = await res.json();
@@ -496,12 +489,9 @@
             }
         }
 
-        // 3. 專門抓取政府新聞處 (info.gov.hk / GIA) 的停課新聞公佈
         async function fetchGovPressRelease() {
             const schoolNoticeBox = document.getElementById('school-closure-notice');
             const targetRssUrl = 'https://www.info.gov.hk/gia/rss/general_zh.xml';
-            
-            // 使用跨域轉譯服務以解析 XML
             const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetRssUrl)}`;
 
             try {
@@ -515,17 +505,14 @@
 
                 let matchedNotice = "";
 
-                // 輪詢最新新聞公佈條目
                 for (let i = 0; i < Math.min(items.length, 25); i++) {
                     const title = items[i].querySelector("title")?.textContent || "";
                     const description = items[i].querySelector("description")?.textContent || "";
                     const combinedText = title + " " + description;
 
-                    // 關鍵字判斷：停課、教育局宣布、學校停課等
                     if ((combinedText.includes("停課") || combinedText.includes("所有學校")) &&
                         (combinedText.includes("教育局") || combinedText.includes("幼稚園") || combinedText.includes("中小學") || combinedText.includes("特殊學校"))) {
                         
-                        // 清除 HTML 標籤並擷取核心句子
                         let cleanText = title.replace(/<\/?[^>]+(>|$)/g, "").trim();
                         matchedNotice = cleanText;
                         break; 
@@ -540,7 +527,6 @@
                 }
 
             } catch (e) {
-                // 備用方案：若政府新聞 RSS 讀取失敗，退回天文台天氣通告 API
                 try {
                     const flwRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc');
                     if (flwRes.ok) {
@@ -561,19 +547,19 @@
         fetchGovPressRelease();
         
         setInterval(fetchWeatherData, 60000);
-        setInterval(fetchGovPressRelease, 60000); // 每分鐘更新一次政府新聞處消息
+        setInterval(fetchGovPressRelease, 60000);
 
         const defaultBuses = [
             { company: "lwb", route: "E36A", dir: "inbound", stop: "TC188", origin_name: "東涌", dest_name: "往 元朗", offset: 0 },
             { company: "ctb", route: "E33", dir: "outbound", stop: "001854", origin_name: "屯門", dest_name: "往 機場/東涌", offset: 0 },
-            { company: "nlb", route: "23", dir: "1", stop: "東涌達東路巴士總站", origin_name: "東涌", dest_name: "往 昂坪", offset: 0 }
+            { company: "nlb", route: "23", dir: "1", stop: "18", origin_name: "東涌", dest_name: "往 昂坪", offset: 0 }
         ];
 
         let currentBuses = [];
         let cachedRawEtas = {};
 
         function loadBusConfigs() {
-            const saved = localStorage.getItem('user_bus_configs_v10');
+            const saved = localStorage.getItem('user_bus_configs_v11');
             if (saved) {
                 try { currentBuses = JSON.parse(saved); } catch(e) { currentBuses = defaultBuses; }
             } else {
@@ -608,6 +594,7 @@
             } catch (e) { return []; }
         }
 
+        /* 修正後的 嶼巴 NLB 到站時間抓取函數 */
         async function getNLBETA(route, stopIdOrName, dir) {
             try {
                 if (!stopIdOrName) return [];
@@ -618,6 +605,7 @@
                 
                 if (!matchedRoute) return [];
 
+                // 若傳入字串包含中文，搜尋匹配的站號 ID
                 if (isNaN(stopId)) {
                     const stopsRes = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${matchedRoute.routeId}`);
                     const stopsData = await stopsRes.json();
@@ -629,7 +617,11 @@
 
                 const etaRes = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=estimatedArrivals&stopId=${stopId}&routeId=${matchedRoute.routeId}`);
                 const etaData = await etaRes.json();
-                return (etaData.estimatedArrivals || []).map(i => ({ eta: i.estimatedArrivalAt }));
+
+                // 核心修復：解析 estimatedArrivalTimestamp 欄位
+                return (etaData.estimatedArrivals || []).map(i => ({ 
+                    eta: i.estimatedArrivalTimestamp || i.estimatedArrivalAt 
+                }));
             } catch (e) { return []; }
         }
 
@@ -751,7 +743,7 @@
                         </div>
                         <div class="config-row">
                             <select class="config-select bus-stop" onchange="handleStopChange(${index})">
-                                <option value="${bus.stop}" selected>${bus.stop ? '已選: ' + bus.stop : '請選擇車站...'}</option>
+                                <option value="${bus.stop}" selected>${bus.stop ? '已選代碼: ' + bus.stop : '請選擇車站...'}</option>
                             </select>
                             <input type="text" class="config-input bus-origin" placeholder="起點站名 (如 東涌)" value="${bus.origin_name || ''}">
                             <input type="text" class="config-input bus-dest" placeholder="目的地 (如 往 昂坪)" value="${bus.dest_name || ''}">
@@ -1037,7 +1029,7 @@
             });
 
             currentBuses = newConfigs;
-            localStorage.setItem('user_bus_configs_v10', JSON.stringify(currentBuses));
+            localStorage.setItem('user_bus_configs_v11', JSON.stringify(currentBuses));
             closeSettings();
             fetchBusData();
         }
