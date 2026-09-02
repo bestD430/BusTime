@@ -69,9 +69,14 @@
         }
 
         .weather-icon {
-            width: 26px;
-            height: 26px;
+            width: 28px;
+            height: 28px;
             object-fit: contain;
+        }
+
+        .weather-emoji {
+            font-size: 1.2rem;
+            line-height: 1;
         }
 
         .weather-temp {
@@ -308,10 +313,11 @@
         </div>
         <div id="date">--年--月--日 星期-</div>
         
-        <!-- 天氣資訊放於日期下方 -->
+        <!-- 天氣資訊（本地圖片 + Fallback 備用 Emoji） -->
         <div class="weather-sub-bar">
             <div class="weather-info-box" id="weather-info-box" style="display: none;">
                 <img id="weather-icon" class="weather-icon" src="" alt="weather icon" />
+                <span id="weather-emoji-fallback" class="weather-emoji" style="display: none;">🌤️</span>
                 <span id="weather-temp" class="weather-temp">--°C</span>
             </div>
             <div class="weather-warnings" id="weather-warnings">
@@ -338,7 +344,7 @@
                 <button class="modal-close" onclick="closeSettings()">&times;</button>
             </div>
             <div class="hint-text">
-                💡 天氣資訊已調整至日期下方顯示。
+                💡 天氣 Icon 讀取自本地 `weather-icons/` 資料夾。
             </div>
             <div class="config-list" id="config-list"></div>
             <div class="modal-footer">
@@ -390,15 +396,28 @@
             const container = document.getElementById('weather-warnings');
             const weatherBox = document.getElementById('weather-info-box');
             const weatherIcon = document.getElementById('weather-icon');
+            const emojiFallback = document.getElementById('weather-emoji-fallback');
             const weatherTemp = document.getElementById('weather-temp');
 
             try {
-                // 1. 抓取氣溫及天氣 Icon 資料 (rhrread API)
+                // 1. 抓取氣溫及天氣 Icon 編號 (rhrread API)
                 const rhrRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc');
                 if (rhrRes.ok) {
                     const rhrData = await rhrRes.json();
                     if (rhrData.icon && rhrData.icon.length > 0) {
-                        weatherIcon.src = `https://www.hko.gov.hk/images/HKO_flk/pic${rhrData.icon[0]}.png`;
+                        const iconId = rhrData.icon[0];
+                        
+                        // 設為本地路徑：weather-icons/picXX.png
+                        weatherIcon.style.display = 'block';
+                        emojiFallback.style.display = 'none';
+                        weatherIcon.src = `weather-icons/pic${iconId}.png`;
+
+                        // 圖片找不到時自動轉用 Emoji 備用
+                        weatherIcon.onerror = function() {
+                            this.style.display = 'none';
+                            emojiFallback.style.display = 'inline';
+                        };
+
                         weatherBox.style.display = 'flex';
                     }
                     if (rhrData.temperature && rhrData.temperature.data && rhrData.temperature.data.length > 0) {
