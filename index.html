@@ -23,7 +23,7 @@
             align-items: center;
             padding-bottom: 10px;
             border-bottom: 1px solid #334155;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             gap: 6px;
             flex-shrink: 0;
         }
@@ -112,12 +112,34 @@
         .badge-tc { background: #ea580c; color: #fff; }
         .badge-ts { background: #7c3aed; color: #fff; }
 
+        /* 政府新聞停課消息通告欄（夾在時鐘欄與巴士欄之間） */
+        .school-notice {
+            display: none; /* 預設隱藏，有停課新聞時自動顯示 */
+            background: #dc2626;
+            color: #ffffff;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 12px;
+            border: 2px solid #f87171;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+            animation: pulse-notice 2s infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse-notice {
+            0% { border-color: #f87171; }
+            50% { border-color: #ffffff; }
+            100% { border-color: #f87171; }
+        }
+
         main {
             display: flex;
             flex: 1;
             flex-direction: column;
             gap: 16px;
-            height: calc(100% - 130px);
             overflow: hidden;
         }
 
@@ -326,6 +348,9 @@
         </div>
     </header>
 
+    <!-- 政府新聞處停課消息通告欄（夾在時鐘欄與巴士欄之間） -->
+    <div id="school-closure-notice" class="school-notice"></div>
+
     <main>
         <section class="bus-panel">
             <div class="panel-title">
@@ -407,12 +432,10 @@
                     if (rhrData.icon && rhrData.icon.length > 0) {
                         const iconId = rhrData.icon[0];
                         
-                        // 設為本地路徑：weather-icons/picXX.png
                         weatherIcon.style.display = 'block';
                         emojiFallback.style.display = 'none';
                         weatherIcon.src = `weather-icons/pic${iconId}.png`;
 
-                        // 圖片找不到時自動轉用 Emoji 備用
                         weatherIcon.onerror = function() {
                             this.style.display = 'none';
                             emojiFallback.style.display = 'inline';
@@ -428,52 +451,117 @@
 
                 // 2. 抓取警告信號摘要 (warnsum API)
                 const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc');
-                if (!res.ok) return;
-                const data = await res.json();
-                
-                let badges = [];
+                if (res.ok) {
+                    const data = await res.json();
+                    let badges = [];
 
-                for (const key in data) {
-                    if (data.hasOwnProperty(key)) {
-                        const item = data[key];
-                        if (item && item.actionCode !== "CANCEL") {
-                            if (key === "WRAINA") badges.push('<span class="warning-badge badge-yellow-rain">🌧️ 黃雨</span>');
-                            else if (key === "WRAINR") badges.push('<span class="warning-badge badge-red-rain">🌧️ 紅雨</span>');
-                            else if (key === "WRAINB") badges.push('<span class="warning-badge badge-black-rain">🌧️ 黑雨</span>');
-                            else if (key.startsWith("WTCSGN")) {
-                                const code = key.replace("WTCSGN", "");
-                                let tcText = "";
-                                if (code === "L") tcText = "1號戒備";
-                                else if (code === "M") tcText = "3號強風";
-                                else if (code === "8NE") tcText = "8號東北";
-                                else if (code === "8SE") tcText = "8號東南";
-                                else if (code === "8NW") tcText = "8號西北";
-                                else if (code === "8SW") tcText = "8號西南";
-                                else if (code === "9") tcText = "9號烈風";
-                                else if (code === "10") tcText = "10號颶風";
-                                else tcText = `${code}號風球`;
+                    for (const key in data) {
+                        if (data.hasOwnProperty(key)) {
+                            const item = data[key];
+                            if (item && item.actionCode !== "CANCEL") {
+                                if (key === "WRAINA") badges.push('<span class="warning-badge badge-yellow-rain">🌧️ 黃雨</span>');
+                                else if (key === "WRAINR") badges.push('<span class="warning-badge badge-red-rain">🌧️ 紅雨</span>');
+                                else if (key === "WRAINB") badges.push('<span class="warning-badge badge-black-rain">🌧️ 黑雨</span>');
+                                else if (key.startsWith("WTCSGN")) {
+                                    const code = key.replace("WTCSGN", "");
+                                    let tcText = "";
+                                    if (code === "L") tcText = "1號戒備";
+                                    else if (code === "M") tcText = "3號強風";
+                                    else if (code === "8NE") tcText = "8號東北";
+                                    else if (code === "8SE") tcText = "8號東南";
+                                    else if (code === "8NW") tcText = "8號西北";
+                                    else if (code === "8SW") tcText = "8號西南";
+                                    else if (code === "9") tcText = "9號烈風";
+                                    else if (code === "10") tcText = "10號颶風";
+                                    else tcText = `${code}號風球`;
 
-                                badges.push(`<span class="warning-badge badge-tc">🌀 ${tcText}</span>`);
-                            } else if (key === "WTS") {
-                                badges.push('<span class="warning-badge badge-ts">⛈️ 雷暴</span>');
-                            } else if (key === "SMS") {
-                                badges.push('<span class="warning-badge badge-tc">💨 強烈季候風</span>');
+                                    badges.push(`<span class="warning-badge badge-tc">🌀 ${tcText}</span>`);
+                                } else if (key === "WTS") {
+                                    badges.push('<span class="warning-badge badge-ts">⛈️ 雷暴</span>');
+                                } else if (key === "SMS") {
+                                    badges.push('<span class="warning-badge badge-tc">💨 強烈季候風</span>');
+                                }
                             }
                         }
                     }
-                }
 
-                if (badges.length > 0) {
-                    container.innerHTML = badges.join('');
-                } else {
-                    container.innerHTML = '<span class="warning-badge badge-none">☀️ 天氣良好</span>';
+                    if (badges.length > 0) {
+                        container.innerHTML = badges.join('');
+                    } else {
+                        container.innerHTML = '<span class="warning-badge badge-none">☀️ 天氣良好</span>';
+                    }
                 }
             } catch (e) {
                 container.innerHTML = '<span class="warning-badge badge-none">☀️ 天氣良好</span>';
             }
         }
+
+        // 3. 專門抓取政府新聞處 (info.gov.hk / GIA) 的停課新聞公佈
+        async function fetchGovPressRelease() {
+            const schoolNoticeBox = document.getElementById('school-closure-notice');
+            const targetRssUrl = 'https://www.info.gov.hk/gia/rss/general_zh.xml';
+            
+            // 使用跨域轉譯服務以解析 XML
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetRssUrl)}`;
+
+            try {
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error('新聞網絡查詢失敗');
+                
+                const responseData = await response.json();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(responseData.contents, "text/xml");
+                const items = xmlDoc.querySelectorAll("item");
+
+                let matchedNotice = "";
+
+                // 輪詢最新新聞公佈條目
+                for (let i = 0; i < Math.min(items.length, 25); i++) {
+                    const title = items[i].querySelector("title")?.textContent || "";
+                    const description = items[i].querySelector("description")?.textContent || "";
+                    const combinedText = title + " " + description;
+
+                    // 關鍵字判斷：停課、教育局宣布、學校停課等
+                    if ((combinedText.includes("停課") || combinedText.includes("所有學校")) &&
+                        (combinedText.includes("教育局") || combinedText.includes("幼稚園") || combinedText.includes("中小學") || combinedText.includes("特殊學校"))) {
+                        
+                        // 清除 HTML 標籤並擷取核心句子
+                        let cleanText = title.replace(/<\/?[^>]+(>|$)/g, "").trim();
+                        matchedNotice = cleanText;
+                        break; 
+                    }
+                }
+
+                if (matchedNotice) {
+                    schoolNoticeBox.innerHTML = `📢 <b>政府新聞公佈：</b> ${matchedNotice}`;
+                    schoolNoticeBox.style.display = 'block';
+                } else {
+                    schoolNoticeBox.style.display = 'none';
+                }
+
+            } catch (e) {
+                // 備用方案：若政府新聞 RSS 讀取失敗，退回天文台天氣通告 API
+                try {
+                    const flwRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc');
+                    if (flwRes.ok) {
+                        const flwData = await flwRes.json();
+                        if (flwData.specialNotice && (flwData.specialNotice.includes("停課") || flwData.specialNotice.includes("中小學"))) {
+                            schoolNoticeBox.innerHTML = `📢 <b>特別通告：</b> ${flwData.specialNotice}`;
+                            schoolNoticeBox.style.display = 'block';
+                            return;
+                        }
+                    }
+                } catch(err) {}
+                
+                schoolNoticeBox.style.display = 'none';
+            }
+        }
+
         fetchWeatherData();
+        fetchGovPressRelease();
+        
         setInterval(fetchWeatherData, 60000);
+        setInterval(fetchGovPressRelease, 60000); // 每分鐘更新一次政府新聞處消息
 
         const defaultBuses = [
             { company: "lwb", route: "E36A", dir: "inbound", stop: "TC188", origin_name: "東涌", dest_name: "往 元朗", offset: 0 },
